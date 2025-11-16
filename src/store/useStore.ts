@@ -1,24 +1,23 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { format } from 'date-fns';
+import { format, startOfDay, subDays, addDays } from 'date-fns';
 import { Item, Todo, Event, Routine, Note } from '../types';
 import { parseInput } from '../utils/parser';
 
 interface AppState {
   // Data
   items: Item[];
-  currentDate: Date;
 
   // Actions
   addItem: (input: string) => void;
   updateItem: (id: string, updates: Partial<Item>) => void;
   deleteItem: (id: string) => void;
   toggleTodoComplete: (id: string) => void;
-  setCurrentDate: (date: Date) => void;
 
-  // Computed
-  getItemsForDate: (date: string) => Item[];
-  getScheduledItemsForDate: (date: string) => Item[];
+  // Computed - get items grouped by date
+  getItemsByDate: () => Map<string, Item[]>;
+  getScheduledItemsByDate: () => Map<string, Item[]>;
+  getAllDatesWithItems: () => string[];
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 11);
@@ -27,7 +26,6 @@ export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       items: [],
-      currentDate: new Date(),
 
       addItem: (input: string) => {
         const parsed = parseInput(input);
@@ -36,7 +34,7 @@ export const useStore = create<AppState>()(
 
         const baseItem = {
           id: generateId(),
-          userId: 'user-1', // For MVP, single user
+          userId: 'user-1',
           content: parsed.content,
           tags: parsed.tags,
           createdAt: now,
@@ -148,33 +146,72 @@ export const useStore = create<AppState>()(
         }));
       },
 
-      setCurrentDate: (date: Date) => {
-        set({ currentDate: date });
+      getItemsByDate: () => {
+        const itemsByDate = new Map<string, Item[]>();
+        const items = get().items;
+
+        items.forEach((item) => {
+          const date = item.createdDate;
+          if (!itemsByDate.has(date)) {
+            itemsByDate.set(date, []);
+          }
+          itemsByDate.get(date)!.push(item);
+        });
+
+        return itemsByDate;
       },
 
-      getItemsForDate: (date: string) => {
-        return get().items.filter((item) => item.createdDate === date);
-      },
+      getScheduledItemsByDate: () => {
+        const itemsByDate = new Map<string, Item[]>();
+        const items = get().items;
 
-      getScheduledItemsForDate: (date: string) => {
-        return get().items.filter((item) => {
+        items.forEach((item) => {
+          let dateKey: string | null = null;
+
           if (item.type === 'todo') {
             const todo = item as Todo;
             if (todo.scheduledTime) {
-              return format(new Date(todo.scheduledTime), 'yyyy-MM-dd') === date;
+              dateKey = format(new Date(todo.scheduledTime), 'yyyy-MM-dd');
             }
-          }
-          if (item.type === 'event') {
+          } else if (item.type === 'event') {
             const event = item as Event;
-            return format(new Date(event.startTime), 'yyyy-MM-dd') === date;
+            dateKey = format(new Date(event.startTime), 'yyyy-MM-dd');
           }
-          if (item.type === 'routine') {
-            // For MVP, just check if routine has a time for today
-            // Full implementation would generate occurrences
-            return false;
+
+          if (dateKey) {
+            if (!itemsByDate.has(dateKey)) {
+              itemsByDate.set(dateKey, []);
+            }
+            itemsByDate.get(dateKey)!.push(item);
           }
-          return false;
         });
+
+        return itemsByDate;
+      },
+
+      getAllDatesWithItems: () => {
+        const dates = new Set<string>();
+        const items = get().items;
+
+        // Get all created dates
+        items.forEach((item) => {
+          dates.add(item.createdDate);
+        });
+
+        // Get all scheduled dates
+        items.forEach((item) => {
+          if (item.type === 'todo') {
+            const todo = item as Todo;
+            if (todo.scheduledTime) {
+              dates.add(format(new Date(todo.scheduledTime), 'yyyy-MM-dd'));
+            }
+          } else if (item.type === 'event') {
+            const event = item as Event;
+            dates.add(format(new Date(event.startTime), 'yyyy-MM-dd'));
+          }
+        });
+
+        return Array.from(dates).sort();
       },
     }),
     {

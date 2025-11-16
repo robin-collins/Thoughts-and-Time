@@ -1,22 +1,57 @@
-import { useState } from 'react';
-import { format } from 'date-fns';
+import { useState, useEffect, useRef } from 'react';
+import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
 import ItemDisplay from './ItemDisplay';
 
 function ThoughtsPane() {
   const [input, setInput] = useState('');
-  const currentDate = useStore((state) => state.currentDate);
   const addItem = useStore((state) => state.addItem);
-  const getItemsForDate = useStore((state) => state.getItemsForDate);
+  const getItemsByDate = useStore((state) => state.getItemsByDate);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
-  const dateString = format(currentDate, 'yyyy-MM-dd');
-  const items = getItemsForDate(dateString);
+  const itemsByDate = getItemsByDate();
+
+  // Generate date range: 30 days past to 30 days future
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const dates: string[] = [];
+
+  for (let i = -30; i <= 30; i++) {
+    const date = i === 0
+      ? new Date()
+      : i < 0
+        ? subDays(new Date(), Math.abs(i))
+        : addDays(new Date(), i);
+    dates.push(format(date, 'yyyy-MM-dd'));
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
       addItem(input);
       setInput('');
+
+      // Scroll to bottom after adding item
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }, 100);
+    }
+  };
+
+  // Auto-scroll to bottom on mount (to show today)
+  useEffect(() => {
+    if (scrollRef.current && isAtBottom) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, []);
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const atBottom = scrollHeight - scrollTop - clientHeight < 50;
+      setIsAtBottom(atBottom);
     }
   };
 
@@ -27,23 +62,46 @@ function ThoughtsPane() {
         <h2 className="text-sm font-serif uppercase tracking-wide">Thoughts</h2>
       </div>
 
-      {/* Items Area - Scrollable */}
-      <div className="flex-1 overflow-y-auto px-48 py-32">
-        {items.length === 0 ? (
-          <div className="text-center text-text-secondary text-sm pt-48">
-            <p>Nothing captured yet today</p>
-            <p className="mt-12">Type 't ' for todo</p>
-            <p>Type 'e ' for event</p>
-            <p>Type 'r ' for routine</p>
-            <p>Just type for a note</p>
-          </div>
-        ) : (
-          <div className="space-y-32">
-            {items.map((item) => (
-              <ItemDisplay key={item.id} item={item} />
-            ))}
-          </div>
-        )}
+      {/* Items Area - Scrollable through all days */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto px-48 py-32"
+      >
+        {dates.map((date) => {
+          const items = itemsByDate.get(date) || [];
+          const isToday = date === today;
+
+          if (items.length === 0 && !isToday) {
+            // Don't show empty days (except today)
+            return null;
+          }
+
+          return (
+            <div key={date} className="mb-64">
+              {/* Date Header */}
+              <div className={`sticky top-0 bg-background py-12 mb-24 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
+                <h3 className="text-sm font-mono uppercase tracking-wide">
+                  {format(parseISO(date), 'EEEE, MMM d, yyyy')}
+                  {isToday && ' (Today)'}
+                </h3>
+              </div>
+
+              {/* Items for this date */}
+              {items.length === 0 ? (
+                <div className="text-center text-text-secondary text-sm py-24">
+                  <p>Nothing captured yet</p>
+                </div>
+              ) : (
+                <div className="space-y-32">
+                  {items.map((item) => (
+                    <ItemDisplay key={item.id} item={item} />
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Input Field - Fixed at Bottom */}
