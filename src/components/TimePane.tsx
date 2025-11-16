@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
+import DailyReview from './DailyReview';
 import { Item, Todo, Event as EventType } from '../types';
 
 type TimelineEntry = {
@@ -163,6 +164,9 @@ function TimePane() {
         ref={scrollRef}
         className="flex-1 overflow-y-auto px-48 py-32"
       >
+        {/* Daily Review - appears at top */}
+        <DailyReview />
+
         {dates.map((date) => {
           const entries = entriesByDate.get(date) || [];
           const isToday = date === today;
