@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
 import ItemDisplay from './ItemDisplay';
+import { Item } from '../types';
 
 function ThoughtsPane() {
   const [input, setInput] = useState('');
@@ -9,12 +10,20 @@ function ThoughtsPane() {
   const [currentDepth, setCurrentDepth] = useState(0);
   const [indentLevel, setIndentLevel] = useState(0);
   const addItem = useStore((state) => state.addItem);
-  const getItemsByDate = useStore((state) => state.getItemsByDate);
+  const items = useStore((state) => state.items);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
 
-  const itemsByDate = getItemsByDate();
+  // Compute items grouped by date (recomputes when items change)
+  const itemsByDate = new Map<string, Item[]>();
+  items.forEach((item) => {
+    const date = item.createdDate;
+    if (!itemsByDate.has(date)) {
+      itemsByDate.set(date, []);
+    }
+    itemsByDate.get(date)!.push(item);
+  });
 
   // Auto-grow textarea
   useEffect(() => {

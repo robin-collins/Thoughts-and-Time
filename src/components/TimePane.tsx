@@ -5,10 +5,31 @@ import ItemDisplay from './ItemDisplay';
 import { Item, Todo } from '../types';
 
 function TimePane() {
-  const getScheduledItemsByDate = useStore((state) => state.getScheduledItemsByDate);
+  const items = useStore((state) => state.items);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const itemsByDate = getScheduledItemsByDate();
+  // Compute scheduled items grouped by date (recomputes when items change)
+  const itemsByDate = new Map<string, Item[]>();
+  items.forEach((item) => {
+    let dateKey: string | null = null;
+
+    if (item.type === 'todo') {
+      const todo = item as Todo;
+      if (todo.scheduledTime) {
+        dateKey = format(new Date(todo.scheduledTime), 'yyyy-MM-dd');
+      }
+    } else if (item.type === 'event') {
+      const event = item as Event;
+      dateKey = format(new Date(event.startTime), 'yyyy-MM-dd');
+    }
+
+    if (dateKey) {
+      if (!itemsByDate.has(dateKey)) {
+        itemsByDate.set(dateKey, []);
+      }
+      itemsByDate.get(dateKey)!.push(item);
+    }
+  });
 
   // Generate date range: 30 days past to 30 days future
   const today = format(new Date(), 'yyyy-MM-dd');
