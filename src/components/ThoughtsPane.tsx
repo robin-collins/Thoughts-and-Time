@@ -11,9 +11,18 @@ function ThoughtsPane() {
   const addItem = useStore((state) => state.addItem);
   const getItemsByDate = useStore((state) => state.getItemsByDate);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
 
   const itemsByDate = getItemsByDate();
+
+  // Auto-grow textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '56px';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+    }
+  }, [input]);
 
   // Generate date range: 30 days past to 30 days future
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -28,18 +37,29 @@ function ThoughtsPane() {
     dates.push(format(date, 'yyyy-MM-dd'));
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Shift+Enter: indent (create sub-item)
-    if (e.key === 'Enter' && e.shiftKey) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Tab: indent (create sub-item)
+    if (e.key === 'Tab' && !e.shiftKey) {
       e.preventDefault();
-
       if (indentLevel < 2) {
         setIndentLevel(indentLevel + 1);
       }
       return;
     }
 
-    // Regular Enter: submit
+    // Shift+Tab: outdent
+    if (e.key === 'Tab' && e.shiftKey) {
+      e.preventDefault();
+      if (indentLevel > 0) {
+        setIndentLevel(indentLevel - 1);
+        if (indentLevel === 1) {
+          setCurrentParentId(null);
+        }
+      }
+      return;
+    }
+
+    // Regular Enter: submit (Shift+Enter adds newline naturally)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
@@ -61,6 +81,11 @@ function ThoughtsPane() {
       }
 
       setInput('');
+
+      // Reset textarea height
+      if (textareaRef.current) {
+        textareaRef.current.style.height = '56px';
+      }
 
       // Scroll to bottom after adding item
       setTimeout(() => {
@@ -144,21 +169,22 @@ function ThoughtsPane() {
 
       {/* Input Field - Fixed at Bottom */}
       <form onSubmit={handleSubmit} className="border-t border-border-subtle">
-        <div className="flex items-center h-[56px]">
+        <div className="flex items-start min-h-[56px]">
           {/* Visual indent indicator */}
           {indentLevel > 0 && (
-            <div className="flex items-center pl-24 text-text-secondary text-xs font-mono">
+            <div className="flex items-center pl-24 pt-16 text-text-secondary text-xs font-mono">
               {'  '.repeat(indentLevel)}→
             </div>
           )}
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={indentLevel > 0 ? "Type prefix: * t e r" : "Type here..."}
+            placeholder={indentLevel > 0 ? "Type prefix: * t e r (Tab/Shift+Tab to indent/outdent)" : "Type here... (Shift+Enter for new line)"}
             style={{ paddingLeft: indentLevel > 0 ? `${indentLevel * 32 + 24}px` : '24px' }}
-            className="flex-1 h-full bg-transparent border-none outline-none font-serif text-base placeholder-text-secondary"
+            className="flex-1 min-h-[56px] max-h-[200px] py-16 px-24 bg-transparent border-none outline-none font-serif text-base placeholder-text-secondary resize-none overflow-y-auto"
+            rows={1}
             autoFocus
           />
         </div>
