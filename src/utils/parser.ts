@@ -62,6 +62,57 @@ customChrono.parsers.push({
   }
 });
 
+// Custom refiner for "between X and Y" to properly parse both start and end times
+customChrono.refiners.push({
+  refine: (context, results) => {
+    results.forEach((result) => {
+      const text = context.text.substring(result.index);
+      const betweenMatch = text.match(/^between\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s+and\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i);
+
+      if (betweenMatch) {
+        const startHour = parseInt(betweenMatch[1]);
+        const startMin = betweenMatch[2] ? parseInt(betweenMatch[2]) : 0;
+        const startMeridiem = betweenMatch[3] || betweenMatch[6];
+        const endHour = parseInt(betweenMatch[4]);
+        const endMin = betweenMatch[5] ? parseInt(betweenMatch[5]) : 0;
+        const endMeridiem = betweenMatch[6];
+
+        // Adjust start hour
+        let adjustedStartHour = startHour;
+        if (startMeridiem && startMeridiem.toLowerCase() === 'pm' && startHour !== 12) {
+          adjustedStartHour += 12;
+        } else if (startMeridiem && startMeridiem.toLowerCase() === 'am' && startHour === 12) {
+          adjustedStartHour = 0;
+        }
+
+        // Adjust end hour
+        let adjustedEndHour = endHour;
+        if (endMeridiem.toLowerCase() === 'pm' && endHour !== 12) {
+          adjustedEndHour += 12;
+        } else if (endMeridiem.toLowerCase() === 'am' && endHour === 12) {
+          adjustedEndHour = 0;
+        }
+
+        // Update start time
+        result.start.assign('hour', adjustedStartHour);
+        result.start.assign('minute', startMin);
+
+        // Create or update end time
+        if (!result.end) {
+          result.end = result.start.clone();
+        }
+
+        if (result.end) {
+          result.end.assign('hour', adjustedEndHour);
+          result.end.assign('minute', endMin);
+        }
+      }
+    });
+
+    return results;
+  }
+});
+
 
 /**
  * Detect item type from prefix
