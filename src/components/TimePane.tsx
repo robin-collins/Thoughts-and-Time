@@ -1,33 +1,63 @@
 import { useEffect, useRef } from 'react';
 import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
-import ItemDisplay from './ItemDisplay';
 import { Item, Todo, Event as EventType } from '../types';
+
+type TimelineEntry = {
+  time: Date;
+  timeKey: string;
+  type: 'todo' | 'event-start' | 'event-end';
+  item: Item;
+};
 
 function TimePane() {
   const items = useStore((state) => state.items);
+  const toggleTodoComplete = useStore((state) => state.toggleTodoComplete);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Compute scheduled items grouped by date (recomputes when items change)
-  const itemsByDate = new Map<string, Item[]>();
-  items.forEach((item) => {
-    let dateKey: string | null = null;
+  // Compute timeline entries grouped by date
+  const entriesByDate = new Map<string, TimelineEntry[]>();
 
+  items.forEach((item) => {
     if (item.type === 'todo') {
       const todo = item as Todo;
       if (todo.scheduledTime) {
-        dateKey = format(new Date(todo.scheduledTime), 'yyyy-MM-dd');
+        const dateKey = format(new Date(todo.scheduledTime), 'yyyy-MM-dd');
+        if (!entriesByDate.has(dateKey)) {
+          entriesByDate.set(dateKey, []);
+        }
+        entriesByDate.get(dateKey)!.push({
+          time: new Date(todo.scheduledTime),
+          timeKey: format(new Date(todo.scheduledTime), 'h:mm a'),
+          type: 'todo',
+          item,
+        });
       }
     } else if (item.type === 'event') {
       const event = item as EventType;
-      dateKey = format(new Date(event.startTime), 'yyyy-MM-dd');
-    }
+      const startTime = new Date(event.startTime);
+      const endTime = new Date(event.endTime);
+      const dateKey = format(startTime, 'yyyy-MM-dd');
 
-    if (dateKey) {
-      if (!itemsByDate.has(dateKey)) {
-        itemsByDate.set(dateKey, []);
+      if (!entriesByDate.has(dateKey)) {
+        entriesByDate.set(dateKey, []);
       }
-      itemsByDate.get(dateKey)!.push(item);
+
+      // Add event start marker
+      entriesByDate.get(dateKey)!.push({
+        time: startTime,
+        timeKey: format(startTime, 'h:mm a'),
+        type: 'event-start',
+        item,
+      });
+
+      // Add event end marker
+      entriesByDate.get(dateKey)!.push({
+        time: endTime,
+        timeKey: format(endTime, 'h:mm a'),
+        type: 'event-end',
+        item,
+      });
     }
   });
 
@@ -47,10 +77,79 @@ function TimePane() {
   // Auto-scroll to today on mount
   useEffect(() => {
     if (scrollRef.current) {
-      // Scroll to middle (where today is)
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight / 2;
     }
   }, []);
+
+  const renderEntry = (entry: TimelineEntry) => {
+    const item = entry.item;
+
+    if (entry.type === 'todo') {
+      const todo = item as Todo;
+      const isCompleted = todo.completedAt;
+
+      return (
+        <div className={`flex items-start gap-12 ${isCompleted ? 'opacity-40' : ''}`}>
+          <button
+            onClick={() => toggleTodoComplete(item.id)}
+            className="text-base leading-book flex-shrink-0 cursor-pointer hover:opacity-70"
+          >
+            {isCompleted ? '☑' : '□'}
+          </button>
+          <div className="flex-1">
+            <p className={`text-base font-serif leading-book ${isCompleted ? 'line-through' : ''}`}>
+              {item.content}
+            </p>
+            {item.tags.length > 0 && (
+              <div className="mt-6 text-sm text-text-secondary">
+                {item.tags.map((tag) => (
+                  <span key={tag} className="mr-12">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    } else if (entry.type === 'event-start') {
+      const event = item as EventType;
+      const startTime = format(new Date(event.startTime), 'h:mm a');
+      const endTime = format(new Date(event.endTime), 'h:mm a');
+
+      return (
+        <div className="flex items-start gap-12">
+          <span className="text-base leading-book flex-shrink-0">⇤</span>
+          <div className="flex-1">
+            <p className="text-base font-serif leading-book font-semibold">
+              {item.content} ({startTime} - {endTime})
+            </p>
+            {item.tags.length > 0 && (
+              <div className="mt-6 text-sm text-text-secondary">
+                {item.tags.map((tag) => (
+                  <span key={tag} className="mr-12">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    } else {
+      // event-end
+      return (
+        <div className="flex items-start gap-12">
+          <span className="text-base leading-book flex-shrink-0">⇥</span>
+          <div className="flex-1">
+            <p className="text-base font-serif leading-book font-semibold">
+              {item.content} (end)
+            </p>
+          </div>
+        </div>
+      );
+    }
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -65,54 +164,26 @@ function TimePane() {
         className="flex-1 overflow-y-auto px-48 py-32"
       >
         {dates.map((date) => {
-          const items = itemsByDate.get(date) || [];
+          const entries = entriesByDate.get(date) || [];
           const isToday = date === today;
 
-          if (items.length === 0) {
-            // Don't show empty days
+          if (entries.length === 0) {
             return null;
           }
 
-          // Separate items with time vs without time
-          const itemsWithTime: Item[] = [];
-          const itemsWithoutTime: Item[] = [];
+          // Sort entries by time
+          const sortedEntries = [...entries].sort((a, b) => a.time.getTime() - b.time.getTime());
 
-          items.forEach((item) => {
-            if (item.type === 'todo') {
-              const todo = item as Todo;
-              if (todo.hasTime) {
-                itemsWithTime.push(item);
-              } else {
-                itemsWithoutTime.push(item);
-              }
-            } else if (item.type === 'event') {
-              itemsWithTime.push(item);
+          // Group by time
+          const entriesByTime: { [timeKey: string]: TimelineEntry[] } = {};
+          sortedEntries.forEach((entry) => {
+            if (!entriesByTime[entry.timeKey]) {
+              entriesByTime[entry.timeKey] = [];
             }
+            entriesByTime[entry.timeKey].push(entry);
           });
 
-          // Group items by hour
-          const itemsByHour: { [hour: string]: Item[] } = {};
-          itemsWithTime.forEach((item) => {
-            let timeKey = '';
-            if (item.type === 'todo') {
-              const todo = item as Todo;
-              if (todo.scheduledTime) {
-                timeKey = format(new Date(todo.scheduledTime), 'h:mm a');
-              }
-            } else if (item.type === 'event') {
-              timeKey = format(new Date(item.startTime), 'h:mm a');
-            }
-
-            if (timeKey) {
-              if (!itemsByHour[timeKey]) {
-                itemsByHour[timeKey] = [];
-              }
-              itemsByHour[timeKey].push(item);
-            }
-          });
-
-          const hours = Object.keys(itemsByHour).sort((a, b) => {
-            // Convert to 24-hour for sorting
+          const times = Object.keys(entriesByTime).sort((a, b) => {
             const timeA = new Date(`1970-01-01 ${a}`);
             const timeB = new Date(`1970-01-01 ${b}`);
             return timeA.getTime() - timeB.getTime();
@@ -130,29 +201,16 @@ function TimePane() {
 
               {/* Items for this date */}
               <div className="space-y-32">
-                {/* Items without specific time - at top */}
-                {itemsWithoutTime.length > 0 && (
-                  <div>
-                    <div className="text-xs font-mono text-text-secondary mb-12 uppercase tracking-wide">
-                      (No time)
-                    </div>
-                    <div className="space-y-24">
-                      {itemsWithoutTime.map((item) => (
-                        <ItemDisplay key={item.id} item={item} showTime={false} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Items with specific times - by hour */}
-                {hours.map((hour) => (
-                  <div key={hour}>
+                {times.map((time) => (
+                  <div key={time}>
                     <div className="text-xs font-mono text-text-secondary mb-12">
-                      {hour}
+                      {time}
                     </div>
                     <div className="space-y-24">
-                      {itemsByHour[hour].map((item) => (
-                        <ItemDisplay key={item.id} item={item} showTime={false} />
+                      {entriesByTime[time].map((entry, idx) => (
+                        <div key={`${entry.item.id}-${entry.type}-${idx}`}>
+                          {renderEntry(entry)}
+                        </div>
                       ))}
                     </div>
                   </div>
