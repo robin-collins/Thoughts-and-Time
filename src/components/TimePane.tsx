@@ -138,7 +138,7 @@ function TimePane() {
                     </div>
                     <div className="space-y-24">
                       {itemsWithoutTime.map((item) => (
-                        <ItemDisplay key={item.id} item={item} />
+                        <ItemDisplay key={item.id} item={item} showTime={false} />
                       ))}
                     </div>
                   </div>
@@ -152,7 +152,7 @@ function TimePane() {
                     </div>
                     <div className="space-y-24">
                       {itemsByHour[hour].map((item) => (
-                        <ItemDisplay key={item.id} item={item} />
+                        <ItemDisplay key={item.id} item={item} showTime={false} />
                       ))}
                     </div>
                   </div>

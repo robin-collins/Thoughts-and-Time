@@ -5,9 +5,10 @@ import { useStore } from '../store/useStore';
 interface ItemDisplayProps {
   item: Item;
   depth?: number;
+  showTime?: boolean;
 }
 
-function ItemDisplay({ item, depth = 0 }: ItemDisplayProps) {
+function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
   const toggleTodoComplete = useStore((state) => state.toggleTodoComplete);
   const items = useStore((state) => state.items);
 
@@ -28,8 +29,8 @@ function ItemDisplay({ item, depth = 0 }: ItemDisplayProps) {
   };
 
   const getTimeDisplay = () => {
-    // Only show timestamp for top-level items
-    if (depth === 0) {
+    // Only show timestamp for top-level items when showTime is true
+    if (depth === 0 && showTime) {
       const time = format(new Date(item.createdAt), 'h:mm a');
       return time;
     }
@@ -129,7 +130,7 @@ function ItemDisplay({ item, depth = 0 }: ItemDisplayProps) {
       {subItems.length > 0 && (
         <div className="mt-16">
           {subItems.map(subItem => (
-            <ItemDisplay key={subItem.id} item={subItem} depth={depth + 1} />
+            <ItemDisplay key={subItem.id} item={subItem} depth={depth + 1} showTime={showTime} />
           ))}
         </div>
       )}
