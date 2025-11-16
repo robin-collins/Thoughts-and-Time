@@ -1,4 +1,6 @@
+// Export ItemType as both type and const for compatibility
 export type ItemType = 'todo' | 'event' | 'routine' | 'note';
+export const ItemTypes = ['todo', 'event', 'routine', 'note'] as const;
 
 export interface BaseItem {
   id: string;
