@@ -6,7 +6,6 @@ import { Item } from '../types';
 
 function ThoughtsPane() {
   const [input, setInput] = useState('');
-  const [currentParentId, setCurrentParentId] = useState<string | null>(null);
   const addItem = useStore((state) => state.addItem);
   const items = useStore((state) => state.items);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -93,7 +92,6 @@ function ThoughtsPane() {
     e.preventDefault();
     if (input.trim()) {
       const lines = input.split('\n');
-      let lastParentId: string | null = null;
       const itemStack: Array<{ id: string; level: number }> = [];
 
       lines.forEach((line) => {
@@ -126,15 +124,7 @@ function ThoughtsPane() {
         }
         // Add this item to stack
         itemStack.push({ id: newItemId, level: indentLevel });
-
-        // Track the first top-level item as potential parent for next submission
-        if (indentLevel === 0 && !lastParentId) {
-          lastParentId = newItemId;
-        }
       });
-
-      // Set parent for next submission
-      setCurrentParentId(lastParentId);
 
       setInput('');
 

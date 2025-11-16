@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Item, Todo, Event, Routine, Note } from '../types';
+import { Item, Todo, Routine, Note } from '../types';
 import { useStore } from '../store/useStore';
 
 interface ItemDisplayProps {

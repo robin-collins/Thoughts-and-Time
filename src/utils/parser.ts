@@ -1,6 +1,67 @@
 import * as chrono from 'chrono-node';
-import { format } from 'date-fns';
+import { addMinutes, addHours } from 'date-fns';
 import { ItemType, ParsedInput, RecurrencePattern } from '../types';
+
+// Create custom Chrono instance with enhanced parsing
+const customChrono = chrono.casual.clone();
+
+// Custom refiner for "in X hours/minutes" patterns
+customChrono.refiners.push({
+  refine: (context, results) => {
+    results.forEach((result) => {
+      const text = context.text.substring(result.index);
+
+      // Handle "in X minutes" or "in X hours"
+      const inTimeMatch = text.match(/^in\s+(\d+)\s+(minute|minutes|hour|hours|min|mins|hr|hrs)/i);
+      if (inTimeMatch) {
+        const amount = parseInt(inTimeMatch[1]);
+        const unit = inTimeMatch[2].toLowerCase();
+        const now = context.refDate || new Date();
+
+        let targetDate = now;
+        if (unit.startsWith('hour') || unit.startsWith('hr')) {
+          targetDate = addHours(now, amount);
+        } else if (unit.startsWith('min')) {
+          targetDate = addMinutes(now, amount);
+        }
+
+        result.start.assign('hour', targetDate.getHours());
+        result.start.assign('minute', targetDate.getMinutes());
+        result.start.assign('day', targetDate.getDate());
+        result.start.assign('month', targetDate.getMonth() + 1);
+        result.start.assign('year', targetDate.getFullYear());
+      }
+    });
+
+    return results;
+  }
+});
+
+// Add patterns for "in X minutes/hours" that Chrono might miss
+customChrono.parsers.push({
+  pattern: () => /\bin\s+(\d+)\s+(minute|minutes|hour|hours|min|mins|hr|hrs)\b/i,
+  extract: (context, match) => {
+    const amount = parseInt(match[1]);
+    const unit = match[2].toLowerCase();
+    const now = context.refDate || new Date();
+
+    let targetDate = now;
+    if (unit.startsWith('hour') || unit.startsWith('hr')) {
+      targetDate = addHours(now, amount);
+    } else if (unit.startsWith('min')) {
+      targetDate = addMinutes(now, amount);
+    }
+
+    return {
+      year: targetDate.getFullYear(),
+      month: targetDate.getMonth() + 1,
+      day: targetDate.getDate(),
+      hour: targetDate.getHours(),
+      minute: targetDate.getMinutes(),
+    };
+  }
+});
+
 
 /**
  * Detect item type from prefix
@@ -77,15 +138,50 @@ export function detectRecurrencePattern(content: string): RecurrencePattern | nu
     return { frequency: 'weekly', interval: 1, daysOfWeek: [1, 2, 3, 4, 5] };
   }
 
-  // Monthly patterns - "second Tuesday of each month"
-  const ordinals = ['first', 'second', 'third', 'fourth', 'last'];
+  // Weekends
+  if (lowerContent.includes('weekend') || lowerContent.includes('every weekend')) {
+    return { frequency: 'weekly', interval: 1, daysOfWeek: [0, 6] };
+  }
+
+  // Enhanced monthly patterns - "first/second/third/fourth/last Tuesday of each month"
+  const ordinals = ['first', 'second', 'third', 'fourth', 'fifth', 'last'];
+  const ordinalNumbers: { [key: string]: number } = {
+    first: 1,
+    second: 2,
+    third: 3,
+    fourth: 4,
+    fifth: 5,
+    last: -1,
+  };
+
   for (const ordinal of ordinals) {
     for (let i = 0; i < dayNames.length; i++) {
-      if (lowerContent.includes(`${ordinal} ${dayNames[i]}`)) {
-        // For MVP, we'll store this as monthly with a note
-        // Full implementation would need more complex logic
-        return { frequency: 'monthly', interval: 1, dayOfMonth: 1 };
+      const patterns = [
+        `${ordinal} ${dayNames[i]} of each month`,
+        `${ordinal} ${dayNames[i]} of the month`,
+        `${ordinal} ${dayNames[i]} of every month`,
+        `${ordinal} ${dayNames[i]} monthly`,
+      ];
+
+      for (const pattern of patterns) {
+        if (lowerContent.includes(pattern)) {
+          return {
+            frequency: 'monthly',
+            interval: 1,
+            nthDayOfWeek: ordinalNumbers[ordinal],
+            dayOfWeek: i,
+          };
+        }
       }
+    }
+  }
+
+  // Specific day of month - "15th of each month", "on the 15th"
+  const dayOfMonthMatch = lowerContent.match(/(?:on the )?(\d{1,2})(?:st|nd|rd|th)?(?: of (?:each|every) month)?/);
+  if (dayOfMonthMatch && (lowerContent.includes('month') || lowerContent.includes('monthly'))) {
+    const day = parseInt(dayOfMonthMatch[1]);
+    if (day >= 1 && day <= 31) {
+      return { frequency: 'monthly', interval: 1, dayOfMonth: day };
     }
   }
 
@@ -94,14 +190,26 @@ export function detectRecurrencePattern(content: string): RecurrencePattern | nu
     return { frequency: 'monthly', interval: 1, dayOfMonth: -1 };
   }
 
+  // Every X weeks
+  const everyXWeeksMatch = lowerContent.match(/every (\d+) weeks?/);
+  if (everyXWeeksMatch) {
+    return { frequency: 'weekly', interval: parseInt(everyXWeeksMatch[1]) };
+  }
+
+  // Every X months
+  const everyXMonthsMatch = lowerContent.match(/every (\d+) months?/);
+  if (everyXMonthsMatch) {
+    return { frequency: 'monthly', interval: parseInt(everyXMonthsMatch[1]) };
+  }
+
   return null;
 }
 
 /**
- * Parse natural language date/time using Chrono
+ * Parse natural language date/time using enhanced Chrono
  */
-export function parseDateTime(content: string): { date: Date | null; hasTime: boolean; refText: string } {
-  const results = chrono.parse(content);
+export function parseDateTime(content: string): { date: Date | null; hasTime: boolean; refText: string; endDate?: Date | null } {
+  const results = customChrono.parse(content);
 
   if (results.length === 0) {
     return { date: null, hasTime: false, refText: '' };
@@ -113,10 +221,14 @@ export function parseDateTime(content: string): { date: Date | null; hasTime: bo
   // Check if time component was specified
   const hasTime = result.start.isCertain('hour') && result.start.isCertain('minute');
 
+  // Check for end time (for events with duration like "2-4pm")
+  const endDate = result.end ? result.end.date() : null;
+
   return {
     date,
     hasTime,
     refText: result.text,
+    endDate,
   };
 }
 
@@ -131,7 +243,7 @@ export function parseDeadline(content: string): Date | null {
     return null;
   }
 
-  // Use Chrono to parse the date after the keyword
+  // Use enhanced Chrono to parse the date after the keyword
   const byMatch = content.match(/by\s+(.+?)(?:\.|$|#)/i);
   const dueMatch = content.match(/due\s+(.+?)(?:\.|$|#)/i);
   const deadlineMatch = content.match(/deadline\s+(.+?)(?:\.|$|#)/i);
@@ -139,7 +251,7 @@ export function parseDeadline(content: string): Date | null {
   const matchText = byMatch?.[1] || dueMatch?.[1] || deadlineMatch?.[1];
 
   if (matchText) {
-    const results = chrono.parse(matchText);
+    const results = customChrono.parse(matchText);
     if (results.length > 0) {
       return results[0].start.date();
     }
@@ -157,6 +269,7 @@ export function parseInput(input: string): ParsedInput {
   const tags = extractTags(content);
 
   let scheduledTime: Date | null = null;
+  let endTime: Date | null = null;
   let hasTime = false;
   let deadline: Date | null = null;
   let recurrencePattern: RecurrencePattern | null = null;
@@ -165,6 +278,7 @@ export function parseInput(input: string): ParsedInput {
   if (type === 'event' || type === 'todo') {
     const parsed = parseDateTime(content);
     scheduledTime = parsed.date;
+    endTime = parsed.endDate || null;
     hasTime = parsed.hasTime;
 
     // For todos, also check for deadline
@@ -190,6 +304,7 @@ export function parseInput(input: string): ParsedInput {
     content,
     tags,
     scheduledTime,
+    endTime,
     hasTime,
     deadline,
     recurrencePattern,

@@ -46,7 +46,9 @@ export interface RecurrencePattern {
   frequency: 'daily' | 'weekly' | 'monthly';
   interval: number; // every X days/weeks/months
   daysOfWeek?: number[]; // [0-6] for weekly, 0=Sunday
-  dayOfMonth?: number; // 1-31 for monthly
+  dayOfMonth?: number; // 1-31 for monthly, -1 for last day
+  nthDayOfWeek?: number; // 1-5 for "first/second/third/fourth/fifth", -1 for "last"
+  dayOfWeek?: number; // 0-6 for "second Tuesday", only used with nthDayOfWeek
 }
 
 export interface Routine extends BaseItem {
@@ -87,6 +89,7 @@ export interface ParsedInput {
   content: string;
   tags: string[];
   scheduledTime: Date | null;
+  endTime?: Date | null;
   hasTime: boolean;
   deadline: Date | null;
   recurrencePattern: RecurrencePattern | null;

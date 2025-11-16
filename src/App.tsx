@@ -1,4 +1,3 @@
-import { useStore } from './store/useStore';
 import ThoughtsPane from './components/ThoughtsPane';
 import TimePane from './components/TimePane';
 

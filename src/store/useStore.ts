@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { format, startOfDay, subDays, addDays } from 'date-fns';
+import { format } from 'date-fns';
 import { Item, Todo, Event, Routine, Note } from '../types';
 import { parseInput } from '../utils/parser';
 
@@ -73,7 +73,7 @@ export const useStore = create<AppState>()(
               ...baseItem,
               type: 'event',
               startTime: parsed.scheduledTime || now,
-              endTime: parsed.scheduledTime || now,
+              endTime: parsed.endTime || parsed.scheduledTime || now,
               hasTime: parsed.hasTime,
               isAllDay: !parsed.hasTime,
               splitStartId: null,
@@ -145,7 +145,7 @@ export const useStore = create<AppState>()(
       updateItem: (id: string, updates: Partial<Item>) => {
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === id ? { ...item, ...updates, updatedAt: new Date() } : item
+            item.id === id ? { ...item, ...updates, updatedAt: new Date() } as Item : item
           ),
         }));
       },

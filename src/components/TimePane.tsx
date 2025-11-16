@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
 import ItemDisplay from './ItemDisplay';
-import { Item, Todo } from '../types';
+import { Item, Todo, Event as EventType } from '../types';
 
 function TimePane() {
   const items = useStore((state) => state.items);
@@ -19,7 +19,7 @@ function TimePane() {
         dateKey = format(new Date(todo.scheduledTime), 'yyyy-MM-dd');
       }
     } else if (item.type === 'event') {
-      const event = item as Event;
+      const event = item as EventType;
       dateKey = format(new Date(event.startTime), 'yyyy-MM-dd');
     }
 
