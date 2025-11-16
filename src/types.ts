@@ -93,4 +93,5 @@ export interface ParsedInput {
   hasTime: boolean;
   deadline: Date | null;
   recurrencePattern: RecurrencePattern | null;
+  embeddedNotes: string[]; // IDs of notes to embed
 }

@@ -34,6 +34,33 @@ export const useStore = create<AppState>()(
 
         const newId = generateId();
 
+        // Get parent item if exists
+        const parentItem = parentId ? get().items.find(i => i.id === parentId) : null;
+        const parentType = parentItem?.type as 'todo' | 'note' | null;
+
+        // VALIDATION: Depth constraints
+        if (parentType === 'todo' && depthLevel > 1) {
+          console.error('Todo subtasks: maximum depth is 1 level');
+          throw new Error('Todo subtasks: maximum depth is 1 level');
+        }
+        if (parentType === 'note' && depthLevel > 2) {
+          console.error('Note sub-items: maximum depth is 2 levels');
+          throw new Error('Note sub-items: maximum depth is 2 levels');
+        }
+
+        // RULE: If parent is todo, child MUST be todo (no prefix needed)
+        // RULE: If parent is note, child can be ANY type (via prefix: * t e r)
+        let itemType = parsed.type;
+        if (parentType === 'todo') {
+          if (parsed.type !== 'todo' && parsed.type !== 'note') {
+            console.error('Todo subtasks must be todos only');
+            throw new Error('Todo subtasks must be todos only');
+          }
+          // Force to todo (subtasks are always todos)
+          itemType = 'todo';
+        }
+        // For notes: itemType remains as parsed.type (any type allowed via prefix)
+
         const baseItem = {
           id: newId,
           userId: 'user-1',
@@ -46,12 +73,9 @@ export const useStore = create<AppState>()(
           cancelledAt: null,
         };
 
-        // Set parent relationship
-        const parentType = parentId ? (get().items.find(i => i.id === parentId)?.type as 'todo' | 'note' || null) : null;
-
         let newItem: Item;
 
-        switch (parsed.type) {
+        switch (itemType) {
           case 'todo':
             newItem = {
               ...baseItem,
@@ -63,7 +87,7 @@ export const useStore = create<AppState>()(
               parentType,
               depthLevel,
               subtasks: [],
-              embeddedItems: [],
+              embeddedItems: parsed.embeddedNotes,
               completionLinkId: null,
             } as Todo;
             break;
@@ -78,7 +102,7 @@ export const useStore = create<AppState>()(
               isAllDay: !parsed.hasTime,
               splitStartId: null,
               splitEndId: null,
-              embeddedItems: [],
+              embeddedItems: parsed.embeddedNotes,
               parentId,
               parentType,
               depthLevel,
@@ -94,7 +118,7 @@ export const useStore = create<AppState>()(
               hasTime: parsed.hasTime,
               streak: 0,
               lastCompleted: null,
-              embeddedItems: [],
+              embeddedItems: parsed.embeddedNotes,
               parentId,
               parentType,
               depthLevel,
@@ -157,19 +181,46 @@ export const useStore = create<AppState>()(
       },
 
       toggleTodoComplete: (id: string) => {
-        set((state) => ({
-          items: state.items.map((item) => {
-            if (item.id === id && item.type === 'todo') {
-              const todo = item as Todo;
-              return {
-                ...todo,
-                completedAt: todo.completedAt ? null : new Date(),
-                updatedAt: new Date(),
-              };
-            }
-            return item;
-          }),
-        }));
+        set((state) => {
+          const todo = state.items.find(i => i.id === id && i.type === 'todo') as Todo | undefined;
+          if (!todo) return state;
+
+          const isCompleting = !todo.completedAt; // Will be marked complete
+          const now = new Date();
+
+          return {
+            items: state.items.map((item) => {
+              // Mark the parent todo
+              if (item.id === id && item.type === 'todo') {
+                return {
+                  ...item,
+                  completedAt: isCompleting ? now : null,
+                  updatedAt: now,
+                };
+              }
+
+              // If completing parent, also complete all subtasks
+              if (isCompleting && item.type === 'todo' && item.parentId === id) {
+                return {
+                  ...item,
+                  completedAt: now,
+                  updatedAt: now,
+                };
+              }
+
+              // If uncompleting parent, also uncomplete subtasks
+              if (!isCompleting && item.type === 'todo' && item.parentId === id) {
+                return {
+                  ...item,
+                  completedAt: null,
+                  updatedAt: now,
+                };
+              }
+
+              return item;
+            }),
+          };
+        });
       },
 
       getItemsByDate: () => {

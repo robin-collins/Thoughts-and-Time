@@ -122,6 +122,39 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
                 {(item as Routine).streak > 0 && ` (Streak: ${(item as Routine).streak})`}
               </div>
             )}
+
+            {/* Embedded notes preview */}
+            {(item.type === 'todo' || item.type === 'event' || item.type === 'routine') &&
+             'embeddedItems' in item && item.embeddedItems.length > 0 && (
+              <div className="mt-12 space-y-8">
+                {item.embeddedItems.map((noteId) => {
+                  const embeddedNote = items.find(i => i.id === noteId && i.type === 'note');
+
+                  if (!embeddedNote) {
+                    // Broken link - note was deleted
+                    return (
+                      <div key={noteId} className="border border-border-subtle rounded-sm px-12 py-8 bg-hover-bg">
+                        <p className="text-sm text-text-secondary italic">
+                          [Note not found: {noteId}]
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  // Display embedded note preview
+                  return (
+                    <div key={noteId} className="border border-border-subtle rounded-sm px-12 py-8 bg-hover-bg">
+                      <div className="flex items-start gap-8">
+                        <span className="text-sm text-text-secondary">↝</span>
+                        <p className="text-sm font-serif italic text-text-secondary">
+                          {embeddedNote.content}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

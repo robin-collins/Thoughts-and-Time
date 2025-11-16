@@ -225,6 +225,16 @@ export function extractTags(content: string): string[] {
 }
 
 /**
+ * Extract embedded note references from content
+ * Pattern: [[note-id]] for embedding notes
+ */
+export function extractEmbeddedNotes(content: string): string[] {
+  const embedPattern = /\[\[([a-z0-9]+)\]\]/g;
+  const matches = content.matchAll(embedPattern);
+  return Array.from(matches, (m) => m[1]);
+}
+
+/**
  * Detect recurrence pattern from text
  * Supports: "every day", "every Monday", "every other Friday", "second Tuesday of each month"
  */
@@ -393,6 +403,7 @@ export function parseInput(input: string): ParsedInput {
   const type = detectItemType(input);
   const content = removePrefix(input);
   const tags = extractTags(content);
+  const embeddedNotes = extractEmbeddedNotes(content);
 
   let scheduledTime: Date | null = null;
   let endTime: Date | null = null;
@@ -434,5 +445,6 @@ export function parseInput(input: string): ParsedInput {
     hasTime,
     deadline,
     recurrencePattern,
+    embeddedNotes,
   };
 }
