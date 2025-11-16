@@ -5,6 +5,9 @@ import ItemDisplay from './ItemDisplay';
 
 function ThoughtsPane() {
   const [input, setInput] = useState('');
+  const [currentParentId, setCurrentParentId] = useState<string | null>(null);
+  const [currentDepth, setCurrentDepth] = useState(0);
+  const [indentLevel, setIndentLevel] = useState(0);
   const addItem = useStore((state) => state.addItem);
   const getItemsByDate = useStore((state) => state.getItemsByDate);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -25,10 +28,38 @@ function ThoughtsPane() {
     dates.push(format(date, 'yyyy-MM-dd'));
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Shift+Enter: indent (create sub-item)
+    if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+
+      if (indentLevel < 2) {
+        setIndentLevel(indentLevel + 1);
+      }
+      return;
+    }
+
+    // Regular Enter: submit
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent | React.KeyboardEvent) => {
     e.preventDefault();
     if (input.trim()) {
-      addItem(input);
+      const newItemId = addItem(input, currentParentId, indentLevel);
+
+      // If this is a top-level note, it can become a parent for sub-items
+      if (indentLevel === 0) {
+        setCurrentParentId(newItemId);
+        setCurrentDepth(0);
+      } else {
+        // Sub-items maintain the parent context
+        setCurrentDepth(indentLevel);
+      }
+
       setInput('');
 
       // Scroll to bottom after adding item
@@ -37,6 +68,12 @@ function ThoughtsPane() {
           scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
       }, 100);
+    } else if (indentLevel > 0) {
+      // Empty line with indent level > 0: outdent
+      setIndentLevel(Math.max(0, indentLevel - 1));
+      if (indentLevel === 1) {
+        setCurrentParentId(null);
+      }
     }
   };
 
@@ -94,7 +131,8 @@ function ThoughtsPane() {
                 </div>
               ) : (
                 <div className="space-y-32">
-                  {items.map((item) => (
+                  {/* Only render top-level items (sub-items are rendered recursively) */}
+                  {items.filter(item => !item.parentId).map((item) => (
                     <ItemDisplay key={item.id} item={item} />
                   ))}
                 </div>
@@ -106,14 +144,24 @@ function ThoughtsPane() {
 
       {/* Input Field - Fixed at Bottom */}
       <form onSubmit={handleSubmit} className="border-t border-border-subtle">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type here..."
-          className="w-full h-[56px] px-24 bg-transparent border-none outline-none font-serif text-base placeholder-text-secondary"
-          autoFocus
-        />
+        <div className="flex items-center h-[56px]">
+          {/* Visual indent indicator */}
+          {indentLevel > 0 && (
+            <div className="flex items-center pl-24 text-text-secondary text-xs font-mono">
+              {'  '.repeat(indentLevel)}→
+            </div>
+          )}
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={indentLevel > 0 ? "Type prefix: * t e r" : "Type here..."}
+            style={{ paddingLeft: indentLevel > 0 ? `${indentLevel * 32 + 24}px` : '24px' }}
+            className="flex-1 h-full bg-transparent border-none outline-none font-serif text-base placeholder-text-secondary"
+            autoFocus
+          />
+        </div>
       </form>
     </div>
   );

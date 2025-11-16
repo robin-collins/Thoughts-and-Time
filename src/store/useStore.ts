@@ -9,7 +9,7 @@ interface AppState {
   items: Item[];
 
   // Actions
-  addItem: (input: string) => void;
+  addItem: (input: string, parentId?: string | null, depthLevel?: number) => string;
   updateItem: (id: string, updates: Partial<Item>) => void;
   deleteItem: (id: string) => void;
   toggleTodoComplete: (id: string) => void;
@@ -27,13 +27,15 @@ export const useStore = create<AppState>()(
     (set, get) => ({
       items: [],
 
-      addItem: (input: string) => {
+      addItem: (input: string, parentId: string | null = null, depthLevel: number = 0) => {
         const parsed = parseInput(input);
         const now = new Date();
         const createdDate = format(now, 'yyyy-MM-dd');
 
+        const newId = generateId();
+
         const baseItem = {
-          id: generateId(),
+          id: newId,
           userId: 'user-1',
           content: parsed.content,
           tags: parsed.tags,
@@ -43,6 +45,9 @@ export const useStore = create<AppState>()(
           completedAt: null,
           cancelledAt: null,
         };
+
+        // Set parent relationship
+        const parentType = parentId ? (get().items.find(i => i.id === parentId)?.type as 'todo' | 'note' || null) : null;
 
         let newItem: Item;
 
@@ -54,9 +59,9 @@ export const useStore = create<AppState>()(
               scheduledTime: parsed.scheduledTime,
               deadline: parsed.deadline,
               hasTime: parsed.hasTime,
-              parentId: null,
-              parentType: null,
-              depthLevel: 0,
+              parentId,
+              parentType,
+              depthLevel,
               subtasks: [],
               embeddedItems: [],
               completionLinkId: null,
@@ -74,9 +79,9 @@ export const useStore = create<AppState>()(
               splitStartId: null,
               splitEndId: null,
               embeddedItems: [],
-              parentId: null,
-              parentType: null,
-              depthLevel: 0,
+              parentId,
+              parentType,
+              depthLevel,
             } as Event;
             break;
 
@@ -90,9 +95,9 @@ export const useStore = create<AppState>()(
               streak: 0,
               lastCompleted: null,
               embeddedItems: [],
-              parentId: null,
-              parentType: null,
-              depthLevel: 0,
+              parentId,
+              parentType,
+              depthLevel,
             } as Routine;
             break;
 
@@ -103,17 +108,38 @@ export const useStore = create<AppState>()(
               type: 'note',
               linkPreviews: [],
               subItems: [],
-              parentId: null,
-              parentType: null,
-              depthLevel: 0,
+              parentId,
+              parentType,
+              depthLevel,
               orderIndex: 0,
             } as Note;
             break;
         }
 
-        set((state) => ({
-          items: [...state.items, newItem],
-        }));
+        // Update parent item to include this sub-item
+        if (parentId) {
+          set((state) => ({
+            items: [
+              ...state.items.map(item => {
+                if (item.id === parentId) {
+                  if (item.type === 'note') {
+                    return { ...item, subItems: [...item.subItems, newId] };
+                  } else if (item.type === 'todo') {
+                    return { ...item, subtasks: [...item.subtasks, newId] };
+                  }
+                }
+                return item;
+              }),
+              newItem
+            ],
+          }));
+        } else {
+          set((state) => ({
+            items: [...state.items, newItem],
+          }));
+        }
+
+        return newId;
       },
 
       updateItem: (id: string, updates: Partial<Item>) => {
