@@ -436,6 +436,27 @@ export function parseInput(input: string): ParsedInput {
     hasTime = parsed.hasTime;
   }
 
+  // Determine if we need to prompt for time
+  // For todos and events with a date but no specific time, we'll prompt
+  const needsTimePrompt =
+    (type === 'todo' || type === 'event') &&
+    scheduledTime !== null &&
+    !hasTime;
+
+  // For all-day events, set to midnight-to-midnight
+  if (type === 'event' && scheduledTime && !hasTime) {
+    // Start at midnight
+    const startOfDay = new Date(scheduledTime);
+    startOfDay.setHours(0, 0, 0, 0);
+    scheduledTime = startOfDay;
+
+    // End at next midnight
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+    endOfDay.setHours(0, 0, 0, 0);
+    endTime = endOfDay;
+  }
+
   return {
     type,
     content,
@@ -446,5 +467,6 @@ export function parseInput(input: string): ParsedInput {
     deadline,
     recurrencePattern,
     embeddedNotes,
+    needsTimePrompt,
   };
 }

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { Item, Todo, Routine, Note } from '../types';
 import { useStore } from '../store/useStore';
@@ -10,7 +11,12 @@ interface ItemDisplayProps {
 
 function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
   const toggleTodoComplete = useStore((state) => state.toggleTodoComplete);
+  const updateItem = useStore((state) => state.updateItem);
+  const deleteItem = useStore((state) => state.deleteItem);
   const items = useStore((state) => state.items);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(item.content);
 
   const getSymbol = () => {
     switch (item.type) {
@@ -43,6 +49,28 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
     }
   };
 
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (editContent.trim() && editContent !== item.content) {
+      updateItem(item.id, { content: editContent.trim() });
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditContent(item.content);
+    setIsEditing(false);
+  };
+
+  const handleDelete = () => {
+    if (confirm('Delete this item?')) {
+      deleteItem(item.id);
+    }
+  };
+
   const isCompleted = item.type === 'todo' && (item as Todo).completedAt;
 
   // Get sub-items
@@ -60,7 +88,11 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
 
   return (
     <div className="group">
-      <div style={{ marginLeft: `${indentPx}px` }}>
+      <div
+        style={{ marginLeft: `${indentPx}px` }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         {/* Timestamp (only for top-level) */}
         {depth === 0 && (
           <div className="text-xs font-mono text-text-secondary mb-6">
@@ -83,15 +115,69 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
 
           {/* Content */}
           <div className="flex-1">
-            <p
-              className={`text-base font-serif leading-book ${
-                item.type === 'note' ? 'italic' : ''
-              } ${item.type === 'event' ? 'font-semibold' : ''} ${
-                isCompleted ? 'line-through' : ''
-              }`}
-            >
-              {item.content}
-            </p>
+            {isEditing ? (
+              <div className="flex items-center gap-8">
+                <input
+                  type="text"
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSaveEdit();
+                    } else if (e.key === 'Escape') {
+                      handleCancelEdit();
+                    }
+                  }}
+                  className="flex-1 px-8 py-4 bg-hover-bg border border-border-subtle rounded-sm font-serif text-base"
+                  autoFocus
+                />
+                <button
+                  onClick={handleSaveEdit}
+                  className="text-sm text-text-secondary hover:text-text-primary"
+                  title="Save (Enter)"
+                >
+                  ✓
+                </button>
+                <button
+                  onClick={handleCancelEdit}
+                  className="text-sm text-text-secondary hover:text-text-primary"
+                  title="Cancel (Esc)"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-start gap-8">
+                <p
+                  className={`flex-1 text-base font-serif leading-book ${
+                    item.type === 'note' ? 'italic' : ''
+                  } ${item.type === 'event' ? 'font-semibold' : ''} ${
+                    isCompleted ? 'line-through' : ''
+                  }`}
+                >
+                  {item.content}
+                </p>
+                {/* Edit/Delete buttons - show on hover */}
+                {isHovered && (
+                  <div className="flex gap-4 flex-shrink-0">
+                    <button
+                      onClick={handleEdit}
+                      className="text-xs text-text-secondary hover:text-text-primary"
+                      title="Edit"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="text-xs text-text-secondary hover:text-text-primary"
+                      title="Delete"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Tags */}
             {item.tags.length > 0 && (

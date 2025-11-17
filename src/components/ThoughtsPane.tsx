@@ -3,6 +3,7 @@ import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
 import ItemDisplay from './ItemDisplay';
 import { Item } from '../types';
+import { parseInput } from '../utils/parser';
 
 function ThoughtsPane() {
   const [input, setInput] = useState('');
@@ -11,6 +12,8 @@ function ThoughtsPane() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [timePrompt, setTimePrompt] = useState<{ line: string; index: number } | null>(null);
+  const [promptedTime, setPromptedTime] = useState('');
 
   // Compute items grouped by date (recomputes when items change)
   const itemsByDate = new Map<string, Item[]>();
@@ -92,54 +95,103 @@ function ThoughtsPane() {
     e.preventDefault();
     if (input.trim()) {
       const lines = input.split('\n');
-      const itemStack: Array<{ id: string; level: number }> = [];
 
-      lines.forEach((line) => {
-        if (!line.trim()) return; // Skip empty lines
+      // First pass: check if any line needs time prompt
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.trim()) continue;
 
-        // Detect indentation level (2 spaces = 1 level)
-        const leadingSpaces = line.match(/^(\s*)/)?.[0].length || 0;
-        const indentLevel = Math.floor(leadingSpaces / 2);
         const contentWithoutIndent = line.trimStart();
+        const parsed = parseInput(contentWithoutIndent);
 
-        // Find parent based on indent level
-        let parentId: string | null = null;
-        if (indentLevel > 0) {
-          // Find the closest parent at indentLevel - 1
-          for (let i = itemStack.length - 1; i >= 0; i--) {
-            if (itemStack[i].level === indentLevel - 1) {
-              parentId = itemStack[i].id;
-              break;
-            }
-          }
+        if (parsed.needsTimePrompt) {
+          // Show time prompt for this line
+          setTimePrompt({ line: contentWithoutIndent, index: i });
+          return;
         }
-
-        // Create item with detected parent and depth
-        const newItemId = addItem(contentWithoutIndent, parentId, indentLevel);
-
-        // Update stack
-        // Remove items at same or deeper level
-        while (itemStack.length > 0 && itemStack[itemStack.length - 1].level >= indentLevel) {
-          itemStack.pop();
-        }
-        // Add this item to stack
-        itemStack.push({ id: newItemId, level: indentLevel });
-      });
-
-      setInput('');
-
-      // Reset textarea height
-      if (textareaRef.current) {
-        textareaRef.current.style.height = '56px';
       }
 
-      // Scroll to bottom after adding item
-      setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      }, 100);
+      // If we get here, no prompts needed - create all items
+      createItems();
     }
+  };
+
+  const createItems = () => {
+    const lines = input.split('\n');
+    const itemStack: Array<{ id: string; level: number }> = [];
+
+    lines.forEach((line) => {
+      if (!line.trim()) return; // Skip empty lines
+
+      // Detect indentation level (2 spaces = 1 level)
+      const leadingSpaces = line.match(/^(\s*)/)?.[0].length || 0;
+      const indentLevel = Math.floor(leadingSpaces / 2);
+      const contentWithoutIndent = line.trimStart();
+
+      // Find parent based on indent level
+      let parentId: string | null = null;
+      if (indentLevel > 0) {
+        // Find the closest parent at indentLevel - 1
+        for (let i = itemStack.length - 1; i >= 0; i--) {
+          if (itemStack[i].level === indentLevel - 1) {
+            parentId = itemStack[i].id;
+            break;
+          }
+        }
+      }
+
+      // Create item with detected parent and depth
+      const newItemId = addItem(contentWithoutIndent, parentId, indentLevel);
+
+      // Update stack
+      // Remove items at same or deeper level
+      while (itemStack.length > 0 && itemStack[itemStack.length - 1].level >= indentLevel) {
+        itemStack.pop();
+      }
+      // Add this item to stack
+      itemStack.push({ id: newItemId, level: indentLevel });
+    });
+
+    setInput('');
+
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '56px';
+    }
+
+    // Scroll to bottom after adding item
+    setTimeout(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+    }, 100);
+  };
+
+  const handleTimePromptSubmit = () => {
+    if (!timePrompt || !promptedTime) return;
+
+    // Update the line with the time
+    const lines = input.split('\n');
+    const updatedLine = lines[timePrompt.index].trimStart() + ' at ' + promptedTime;
+
+    // Restore indentation
+    const leadingSpaces = lines[timePrompt.index].match(/^(\s*)/)?.[0] || '';
+    lines[timePrompt.index] = leadingSpaces + updatedLine;
+
+    setInput(lines.join('\n'));
+    setTimePrompt(null);
+    setPromptedTime('');
+
+    // Re-submit after a brief delay to allow state to update
+    setTimeout(() => {
+      const syntheticEvent = new Event('submit') as any;
+      handleSubmit(syntheticEvent);
+    }, 50);
+  };
+
+  const handleTimePromptCancel = () => {
+    setTimePrompt(null);
+    setPromptedTime('');
   };
 
   // Auto-scroll to bottom on mount (to show today)
@@ -159,6 +211,44 @@ function ThoughtsPane() {
 
   return (
     <div className="h-full flex flex-col">
+      {/* Time Prompt Modal */}
+      {timePrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-background border border-border-subtle rounded-sm p-24 max-w-md w-full mx-16">
+            <h3 className="text-base font-serif mb-16">What time?</h3>
+            <p className="text-sm text-text-secondary mb-16 font-serif">{timePrompt.line}</p>
+            <input
+              type="time"
+              value={promptedTime}
+              onChange={(e) => setPromptedTime(e.target.value)}
+              className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm mb-16"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleTimePromptSubmit();
+                } else if (e.key === 'Escape') {
+                  handleTimePromptCancel();
+                }
+              }}
+            />
+            <div className="flex gap-8 justify-end">
+              <button
+                onClick={handleTimePromptCancel}
+                className="px-16 py-8 text-sm font-mono text-text-secondary hover:text-text-primary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTimePromptSubmit}
+                className="px-16 py-8 text-sm font-mono text-text-primary border border-border-subtle rounded-sm hover:bg-hover-bg"
+              >
+                Add Time
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pane Header */}
       <div className="h-[48px] border-b border-border-subtle flex items-center px-48">
         <h2 className="text-sm font-serif uppercase tracking-wide">Thoughts</h2>

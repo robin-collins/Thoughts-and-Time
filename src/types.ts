@@ -94,4 +94,5 @@ export interface ParsedInput {
   deadline: Date | null;
   recurrencePattern: RecurrencePattern | null;
   embeddedNotes: string[]; // IDs of notes to embed
+  needsTimePrompt: boolean; // True if date exists but no specific time
 }
