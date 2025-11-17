@@ -7,9 +7,10 @@ import { parseInput } from '../utils/parser';
 
 interface ThoughtsPaneProps {
   searchQuery?: string;
+  viewMode?: 'infinite' | 'book';
 }
 
-function ThoughtsPane({ searchQuery = '' }: ThoughtsPaneProps) {
+function ThoughtsPane({ searchQuery = '', viewMode = 'infinite' }: ThoughtsPaneProps) {
   const [input, setInput] = useState('');
   const addItem = useStore((state) => state.addItem);
   const items = useStore((state) => state.items);
@@ -19,6 +20,8 @@ function ThoughtsPane({ searchQuery = '' }: ThoughtsPaneProps) {
   const [timePrompt, setTimePrompt] = useState<{ line: string; index: number; isEvent: boolean } | null>(null);
   const [promptedTime, setPromptedTime] = useState('');
   const [promptedEndTime, setPromptedEndTime] = useState('');
+  const [isPageFlipping, setIsPageFlipping] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Filter function: recursively check if item or its children match search
   const matchesSearch = (item: Item, query: string): boolean => {
@@ -362,6 +365,23 @@ function ThoughtsPane({ searchQuery = '' }: ThoughtsPaneProps) {
       const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
       const atBottom = scrollHeight - scrollTop - clientHeight < 50;
       setIsAtBottom(atBottom);
+
+      // Book mode: trigger page-flip animation when scroll settles
+      if (viewMode === 'book') {
+        // Clear existing timeout
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+
+        // Set new timeout to detect when scroll stops
+        scrollTimeoutRef.current = setTimeout(() => {
+          // Trigger brief page-flip animation
+          setIsPageFlipping(true);
+          setTimeout(() => {
+            setIsPageFlipping(false);
+          }, 600);
+        }, 150);
+      }
     }
   };
 
@@ -458,7 +478,12 @@ function ThoughtsPane({ searchQuery = '' }: ThoughtsPaneProps) {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-24 py-16 snap-y snap-mandatory"
+        className={`flex-1 overflow-y-auto px-24 py-16 ${
+          viewMode === 'infinite' ? 'snap-y snap-mandatory' : 'snap-y snap-mandatory'
+        } ${
+          isPageFlipping && viewMode === 'book' ? 'page-flip' : ''
+        }`}
+        style={viewMode === 'book' ? { scrollSnapType: 'y mandatory', height: 'calc(100vh - 60px - 90px)' } : undefined}
       >
         {dates.map((date) => {
           const items = itemsByDate.get(date) || [];
@@ -470,7 +495,11 @@ function ThoughtsPane({ searchQuery = '' }: ThoughtsPaneProps) {
           }
 
           return (
-            <div key={date} className="mb-16 snap-start">
+            <div
+              key={date}
+              className="snap-start"
+              style={viewMode === 'book' ? { minHeight: 'calc(100vh - 60px - 90px)', marginBottom: 0 } : { marginBottom: '16px' }}
+            >
               {/* Date Header */}
               <div className={`sticky top-0 bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
                 <h3 className="text-base font-serif uppercase tracking-wide">

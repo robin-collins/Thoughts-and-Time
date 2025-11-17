@@ -66,24 +66,31 @@ function Settings({ isOpen, onClose }: SettingsProps) {
             </div>
           </div>
 
-          {/* View Mode Setting (Coming Soon) */}
-          <div className="opacity-50">
+          {/* View Mode Setting */}
+          <div>
             <label className="block text-sm font-serif mb-8">View Mode</label>
             <div className="flex gap-8">
               <button
-                disabled
-                className="flex-1 px-16 py-8 text-sm font-mono border border-border-subtle rounded-sm cursor-not-allowed bg-transparent text-text-secondary"
+                onClick={() => setViewMode('infinite')}
+                className={`flex-1 px-16 py-8 text-sm font-mono border rounded-sm transition-colors ${
+                  viewMode === 'infinite'
+                    ? 'bg-text-primary text-background border-text-primary'
+                    : 'bg-transparent text-text-secondary border-border-subtle hover:border-text-secondary'
+                }`}
               >
                 Infinite Scrolling
               </button>
               <button
-                disabled
-                className="flex-1 px-16 py-8 text-sm font-mono border border-border-subtle rounded-sm cursor-not-allowed bg-transparent text-text-secondary"
+                onClick={() => setViewMode('book')}
+                className={`flex-1 px-16 py-8 text-sm font-mono border rounded-sm transition-colors ${
+                  viewMode === 'book'
+                    ? 'bg-text-primary text-background border-text-primary'
+                    : 'bg-transparent text-text-secondary border-border-subtle hover:border-text-secondary'
+                }`}
               >
                 Book Style
               </button>
             </div>
-            <p className="text-xs text-text-secondary mt-6">Coming soon</p>
           </div>
         </div>
       </div>

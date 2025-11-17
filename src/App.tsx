@@ -2,11 +2,13 @@ import { useState } from 'react';
 import ThoughtsPane from './components/ThoughtsPane';
 import TimePane from './components/TimePane';
 import Settings from './components/Settings';
+import { useSettingsStore } from './store/useSettingsStore';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const viewMode = useSettingsStore((state) => state.viewMode);
 
   return (
     <div className="h-full flex flex-col bg-background text-text-primary">
@@ -58,12 +60,12 @@ function App() {
       <div className="flex-1 flex overflow-hidden">
         {/* Thoughts Pane - Left */}
         <div className="w-1/2 border-r border-border-subtle">
-          <ThoughtsPane searchQuery={searchQuery} />
+          <ThoughtsPane searchQuery={searchQuery} viewMode={viewMode} />
         </div>
 
         {/* Time Pane - Right */}
         <div className="w-1/2">
-          <TimePane searchQuery={searchQuery} />
+          <TimePane searchQuery={searchQuery} viewMode={viewMode} />
         </div>
       </div>
     </div>

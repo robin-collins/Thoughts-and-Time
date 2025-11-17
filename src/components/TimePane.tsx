@@ -14,9 +14,10 @@ type TimelineEntry = {
 
 interface TimePaneProps {
   searchQuery?: string;
+  viewMode?: 'infinite' | 'book';
 }
 
-function TimePane({ searchQuery = '' }: TimePaneProps) {
+function TimePane({ searchQuery = '', viewMode = 'infinite' }: TimePaneProps) {
   const items = useStore((state) => state.items);
   const toggleTodoComplete = useStore((state) => state.toggleTodoComplete);
   const updateItem = useStore((state) => state.updateItem);
@@ -25,6 +26,8 @@ function TimePane({ searchQuery = '' }: TimePaneProps) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [isPageFlipping, setIsPageFlipping] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Filter function: recursively check if item or its children match search
   const matchesSearch = (item: Item, query: string): boolean => {
@@ -161,6 +164,25 @@ function TimePane({ searchQuery = '' }: TimePaneProps) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight / 2;
     }
   }, []);
+
+  const handleScroll = () => {
+    // Book mode: trigger page-flip animation when scroll settles
+    if (viewMode === 'book' && scrollRef.current) {
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      // Set new timeout to detect when scroll stops
+      scrollTimeoutRef.current = setTimeout(() => {
+        // Trigger brief page-flip animation
+        setIsPageFlipping(true);
+        setTimeout(() => {
+          setIsPageFlipping(false);
+        }, 600);
+      }, 150);
+    }
+  };
 
   const handleEdit = (itemId: string, content: string) => {
     setEditingItem(itemId);
@@ -494,7 +516,13 @@ function TimePane({ searchQuery = '' }: TimePaneProps) {
       {/* Timeline - Scrollable through all days */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-24 py-16 snap-y snap-mandatory"
+        onScroll={handleScroll}
+        className={`flex-1 overflow-y-auto px-24 py-16 ${
+          viewMode === 'infinite' ? 'snap-y snap-mandatory' : 'snap-y snap-mandatory'
+        } ${
+          isPageFlipping && viewMode === 'book' ? 'page-flip' : ''
+        }`}
+        style={viewMode === 'book' ? { scrollSnapType: 'y mandatory', height: 'calc(100vh - 60px - 90px)' } : undefined}
       >
         {/* Daily Review - appears at top */}
         <DailyReview />
@@ -526,7 +554,11 @@ function TimePane({ searchQuery = '' }: TimePaneProps) {
           });
 
           return (
-            <div key={date} className="mb-16 snap-start">
+            <div
+              key={date}
+              className="snap-start"
+              style={viewMode === 'book' ? { minHeight: 'calc(100vh - 60px - 90px)', marginBottom: 0 } : { marginBottom: '16px' }}
+            >
               {/* Date Header */}
               <div className={`sticky top-0 bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
                 <h3 className="text-base font-serif uppercase tracking-wide">
