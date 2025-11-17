@@ -46,10 +46,11 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
       case 'routine':
         return 'r';
       case 'note':
-        // Top-level notes have no prefix, subnotes use *
-        return depth > 0 ? '*' : '';
+        // Notes (both top-level and subnotes) have no prefix when editing
+        // Subnotes are identified by their depth/indentation, not by prefix
+        return '';
       default:
-        return depth > 0 ? '*' : '';
+        return '';
     }
   };
 
