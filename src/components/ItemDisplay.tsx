@@ -70,12 +70,13 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
   };
 
   const handleEdit = () => {
-    // Initialize edit content with prefix + content
-    const prefix = getPrefix();
-    if (prefix) {
-      setEditContent(`${prefix} ${item.content}`);
+    // Initialize edit content with symbol + content
+    const symbol = getSymbol();
+    if (symbol && item.type !== 'note') {
+      // For todos, events, routines: show symbol
+      setEditContent(`${symbol} ${item.content}`);
     } else {
-      // Top-level notes have no prefix
+      // For notes: no prefix or symbol
       setEditContent(item.content);
     }
     setIsEditing(true);
@@ -107,7 +108,7 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
       // Add type-specific fields
       if (parsed.type === 'todo') {
         Object.assign(newItemData, {
-          scheduledTime: parsed.scheduledTime,
+          scheduledTime: parsed.scheduledTime || new Date(), // Default to now if no time specified
           hasTime: parsed.hasTime,
           deadline: parsed.deadline,
           completedAt: null,
@@ -115,9 +116,10 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
           embeddedItems: [],
         });
       } else if (parsed.type === 'event') {
+        const defaultTime = new Date();
         Object.assign(newItemData, {
-          startTime: parsed.scheduledTime || new Date(),
-          endTime: parsed.endTime || parsed.scheduledTime || new Date(),
+          startTime: parsed.scheduledTime || defaultTime,
+          endTime: parsed.endTime || parsed.scheduledTime || new Date(defaultTime.getTime() + 60 * 60 * 1000), // Default 1 hour duration
           hasTime: parsed.hasTime,
           embeddedItems: [],
         });

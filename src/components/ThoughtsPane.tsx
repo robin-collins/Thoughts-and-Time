@@ -573,7 +573,7 @@ function ThoughtsPane({
         ref={scrollRef}
         onScroll={handleScroll}
         className={`flex-1 overflow-y-auto px-24 py-16 ${
-          viewMode === 'infinite' ? 'snap-y snap-mandatory' : ''
+          viewMode === 'infinite' ? 'snap-y snap-mandatory' : viewMode === 'book' ? 'snap-y snap-proximity' : ''
         } ${
           isPageFlipping && viewMode === 'book' ? 'page-flip-left' : ''
         }`}
@@ -591,7 +591,7 @@ function ThoughtsPane({
           return (
             <div
               key={date}
-              className={viewMode === 'infinite' ? 'mb-16 snap-start' : ''}
+              className={viewMode === 'infinite' ? 'mb-16 snap-start' : viewMode === 'book' ? 'snap-start snap-always' : ''}
             >
               {/* Date Header */}
               <div className={`sticky top-0 bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}>

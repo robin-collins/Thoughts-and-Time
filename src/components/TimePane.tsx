@@ -282,30 +282,31 @@ function TimePane({
     }
   }, [viewMode, onNextDay, onPreviousDay]);
 
-  // Get prefix for item type
-  const getPrefix = (item: Item) => {
+  // Get symbol for item type
+  const getSymbol = (item: Item) => {
     switch (item.type) {
       case 'todo':
-        return 't';
+        const todo = item as Todo;
+        return todo.completedAt ? '☑' : '□';
       case 'event':
-        return 'e';
+        return '↹';
       case 'routine':
-        return 'r';
+        return '↻';
       case 'note':
-        // Timeline entries are top-level, so notes have no prefix
-        return '';
+        return '↝';
       default:
         return '';
     }
   };
 
   const handleEdit = (itemId: string, item: Item) => {
-    const prefix = getPrefix(item);
+    const symbol = getSymbol(item);
     setEditingItem(itemId);
-    if (prefix) {
-      setEditContent(`${prefix} ${item.content}`);
+    if (symbol && item.type !== 'note') {
+      // For todos, events, routines: show symbol
+      setEditContent(`${symbol} ${item.content}`);
     } else {
-      // Notes have no prefix
+      // For notes: no prefix or symbol
       setEditContent(item.content);
     }
   };
@@ -348,7 +349,7 @@ function TimePane({
       // Add type-specific fields
       if (parsed.type === 'todo') {
         Object.assign(newItemData, {
-          scheduledTime: parsed.scheduledTime,
+          scheduledTime: parsed.scheduledTime || new Date(), // Default to now if no time specified
           hasTime: parsed.hasTime,
           deadline: parsed.deadline,
           completedAt: null,
@@ -356,9 +357,10 @@ function TimePane({
           embeddedItems: [],
         });
       } else if (parsed.type === 'event') {
+        const defaultTime = new Date();
         Object.assign(newItemData, {
-          startTime: parsed.scheduledTime || new Date(),
-          endTime: parsed.endTime || parsed.scheduledTime || new Date(),
+          startTime: parsed.scheduledTime || defaultTime,
+          endTime: parsed.endTime || parsed.scheduledTime || new Date(defaultTime.getTime() + 60 * 60 * 1000), // Default 1 hour duration
           hasTime: parsed.hasTime,
           embeddedItems: [],
         });
@@ -768,7 +770,7 @@ function TimePane({
         ref={scrollRef}
         onScroll={handleScroll}
         className={`flex-1 overflow-y-auto px-24 py-16 ${
-          viewMode === 'infinite' ? 'snap-y snap-mandatory' : ''
+          viewMode === 'infinite' ? 'snap-y snap-mandatory' : viewMode === 'book' ? 'snap-y snap-proximity' : ''
         } ${
           isPageFlipping && viewMode === 'book' ? 'page-flip' : ''
         }`}
@@ -806,7 +808,7 @@ function TimePane({
           return (
             <div
               key={date}
-              className={viewMode === 'infinite' ? 'mb-16 snap-start' : ''}
+              className={viewMode === 'infinite' ? 'mb-16 snap-start' : viewMode === 'book' ? 'snap-start snap-always' : ''}
             >
               {/* Date Header */}
               <div className={`sticky top-0 bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
