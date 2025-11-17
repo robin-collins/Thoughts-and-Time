@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
 import DailyReview from './DailyReview';
-import { Item, Todo, Event as EventType } from '../types';
+import { Item, Todo, Event as EventType, Note } from '../types';
 
 type TimelineEntry = {
   time: Date;
@@ -11,7 +11,11 @@ type TimelineEntry = {
   item: Item;
 };
 
-function TimePane() {
+interface TimePaneProps {
+  searchQuery?: string;
+}
+
+function TimePane({ searchQuery = '' }: TimePaneProps) {
   const items = useStore((state) => state.items);
   const toggleTodoComplete = useStore((state) => state.toggleTodoComplete);
   const updateItem = useStore((state) => state.updateItem);
@@ -21,12 +25,50 @@ function TimePane() {
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
 
+  // Filter function: recursively check if item or its children match search
+  const matchesSearch = (item: Item, query: string): boolean => {
+    if (!query) return true;
+
+    const lowerQuery = query.toLowerCase();
+
+    // Check content
+    if (item.content.toLowerCase().includes(lowerQuery)) {
+      return true;
+    }
+
+    // Check tags
+    if (item.tags.some(tag => tag.toLowerCase().includes(lowerQuery))) {
+      return true;
+    }
+
+    // Recursively check sub-items
+    const subItemIds = item.type === 'note'
+      ? (item as Note).subItems
+      : item.type === 'todo'
+        ? (item as Todo).subtasks
+        : [];
+
+    for (const subId of subItemIds) {
+      const subItem = items.find(i => i.id === subId);
+      if (subItem && matchesSearch(subItem, query)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  // Filter items based on search query
+  const filteredItems = searchQuery
+    ? items.filter(item => matchesSearch(item, searchQuery))
+    : items;
+
   // Compute timeline entries grouped by date
   const entriesByDate = new Map<string, TimelineEntry[]>();
 
   // First, collect all scheduled todos for checking event overlaps
   const scheduledTodos: Array<{ time: Date; item: Todo }> = [];
-  items.forEach((item) => {
+  filteredItems.forEach((item) => {
     if (item.type === 'todo') {
       const todo = item as Todo;
       if (todo.scheduledTime) {
@@ -46,7 +88,7 @@ function TimePane() {
   };
 
   // Now process all items
-  items.forEach((item) => {
+  filteredItems.forEach((item) => {
     if (item.type === 'todo') {
       const todo = item as Todo;
       if (todo.scheduledTime) {

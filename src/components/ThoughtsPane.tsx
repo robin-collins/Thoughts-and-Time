@@ -2,10 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
 import ItemDisplay from './ItemDisplay';
-import { Item } from '../types';
+import { Item, Todo, Note } from '../types';
 import { parseInput } from '../utils/parser';
 
-function ThoughtsPane() {
+interface ThoughtsPaneProps {
+  searchQuery?: string;
+}
+
+function ThoughtsPane({ searchQuery = '' }: ThoughtsPaneProps) {
   const [input, setInput] = useState('');
   const addItem = useStore((state) => state.addItem);
   const items = useStore((state) => state.items);
@@ -16,9 +20,47 @@ function ThoughtsPane() {
   const [promptedTime, setPromptedTime] = useState('');
   const [promptedEndTime, setPromptedEndTime] = useState('');
 
+  // Filter function: recursively check if item or its children match search
+  const matchesSearch = (item: Item, query: string): boolean => {
+    if (!query) return true;
+
+    const lowerQuery = query.toLowerCase();
+
+    // Check content
+    if (item.content.toLowerCase().includes(lowerQuery)) {
+      return true;
+    }
+
+    // Check tags
+    if (item.tags.some(tag => tag.toLowerCase().includes(lowerQuery))) {
+      return true;
+    }
+
+    // Recursively check sub-items
+    const subItemIds = item.type === 'note'
+      ? (item as Note).subItems
+      : item.type === 'todo'
+        ? (item as Todo).subtasks
+        : [];
+
+    for (const subId of subItemIds) {
+      const subItem = items.find(i => i.id === subId);
+      if (subItem && matchesSearch(subItem, query)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  // Filter items based on search query
+  const filteredItems = searchQuery
+    ? items.filter(item => matchesSearch(item, searchQuery))
+    : items;
+
   // Compute items grouped by date (recomputes when items change)
   const itemsByDate = new Map<string, Item[]>();
-  items.forEach((item) => {
+  filteredItems.forEach((item) => {
     const date = item.createdDate;
     if (!itemsByDate.has(date)) {
       itemsByDate.set(date, []);
