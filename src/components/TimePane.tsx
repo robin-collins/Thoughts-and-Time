@@ -38,6 +38,7 @@ function TimePane({
   const [isPageFlipping, setIsPageFlipping] = useState(false);
   const lastScrollTop = useRef(0);
   const isTransitioning = useRef(false);
+  const wheelDeltaY = useRef(0);
 
   // Filter function: recursively check if item or its children match search
   const matchesSearch = (item: Item, query: string): boolean => {
@@ -175,6 +176,51 @@ function TimePane({
     }
   }, []);
 
+  const handleWheel = (e: WheelEvent) => {
+    if (!scrollRef.current || viewMode !== 'book' || !onNextDay || !onPreviousDay || isTransitioning.current) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    const isScrollable = scrollHeight > clientHeight;
+
+    // For non-scrollable content, use wheel events directly
+    if (!isScrollable) {
+      wheelDeltaY.current += e.deltaY;
+
+      // Threshold to prevent accidental triggers
+      if (wheelDeltaY.current > 100) {
+        // Scroll down = next day
+        wheelDeltaY.current = 0;
+        isTransitioning.current = true;
+        setIsPageFlipping(true);
+        setTimeout(() => {
+          onNextDay();
+          setTimeout(() => {
+            if (scrollRef.current) scrollRef.current.scrollTop = 0;
+            setTimeout(() => {
+              setIsPageFlipping(false);
+              isTransitioning.current = false;
+            }, 600);
+          }, 50);
+        }, 50);
+      } else if (wheelDeltaY.current < -100) {
+        // Scroll up = previous day
+        wheelDeltaY.current = 0;
+        isTransitioning.current = true;
+        setIsPageFlipping(true);
+        setTimeout(() => {
+          onPreviousDay();
+          setTimeout(() => {
+            if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            setTimeout(() => {
+              setIsPageFlipping(false);
+              isTransitioning.current = false;
+            }, 600);
+          }, 50);
+        }, 50);
+      }
+    }
+  };
+
   const handleScroll = () => {
     if (!scrollRef.current) return;
 
@@ -226,6 +272,15 @@ function TimePane({
       }
     }
   };
+
+  // Add wheel event listener for non-scrollable content
+  useEffect(() => {
+    const scrollEl = scrollRef.current;
+    if (scrollEl && viewMode === 'book') {
+      scrollEl.addEventListener('wheel', handleWheel as any);
+      return () => scrollEl.removeEventListener('wheel', handleWheel as any);
+    }
+  }, [viewMode, onNextDay, onPreviousDay]);
 
   const handleEdit = (itemId: string, content: string) => {
     setEditingItem(itemId);
