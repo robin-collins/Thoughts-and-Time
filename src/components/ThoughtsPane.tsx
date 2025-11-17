@@ -89,6 +89,15 @@ function ThoughtsPane({ searchQuery = '' }: ThoughtsPaneProps) {
     dates.push(format(date, 'yyyy-MM-dd'));
   }
 
+  // Helper: Convert symbols back to prefixes for parsing
+  const symbolsToPrefix = (text: string): string => {
+    return text
+      .replace(/^(\s*)↹\s/, '$1e ')
+      .replace(/^(\s*)□\s/, '$1t ')
+      .replace(/^(\s*)↻\s/, '$1r ')
+      .replace(/^(\s*)↝\s/, '$1* ');
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     const cursorPos = e.target.selectionStart;
@@ -228,7 +237,9 @@ function ThoughtsPane({ searchQuery = '' }: ThoughtsPaneProps) {
         if (!line.trim()) continue;
 
         const contentWithoutIndent = line.trimStart();
-        const parsed = parseInput(contentWithoutIndent);
+        // Convert symbols back to prefixes before parsing
+        const contentWithPrefix = symbolsToPrefix(contentWithoutIndent);
+        const parsed = parseInput(contentWithPrefix);
 
         if (parsed.needsTimePrompt) {
           // Show time prompt for this line
@@ -257,6 +268,8 @@ function ThoughtsPane({ searchQuery = '' }: ThoughtsPaneProps) {
       const leadingSpaces = line.match(/^(\s*)/)?.[0].length || 0;
       const indentLevel = Math.floor(leadingSpaces / 2);
       const contentWithoutIndent = line.trimStart();
+      // Convert symbols back to prefixes before parsing
+      const contentWithPrefix = symbolsToPrefix(contentWithoutIndent);
 
       // Find parent based on indent level
       let parentId: string | null = null;
@@ -271,7 +284,7 @@ function ThoughtsPane({ searchQuery = '' }: ThoughtsPaneProps) {
       }
 
       // Create item with detected parent and depth
-      const newItemId = addItem(contentWithoutIndent, parentId, indentLevel);
+      const newItemId = addItem(contentWithPrefix, parentId, indentLevel);
 
       // Update stack
       // Remove items at same or deeper level
