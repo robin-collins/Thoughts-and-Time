@@ -84,7 +84,7 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
     .map(id => items.find(i => i.id === id))
     .filter(Boolean) as Item[];
 
-  const indentPx = depth * 24;
+  const indentPx = depth * 18;
 
   return (
     <div className="group">
@@ -95,13 +95,13 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
       >
         {/* Timestamp (only for top-level) */}
         {depth === 0 && (
-          <div className="text-xs font-mono text-text-secondary mb-4">
+          <div className="text-xs font-mono text-text-secondary mb-2">
             {getTimeDisplay()}
           </div>
         )}
 
         {/* Item Content */}
-        <div className={`flex items-start gap-8 ${isCompleted ? 'opacity-40' : ''}`}>
+        <div className={`flex items-start gap-6 ${isCompleted ? 'opacity-40' : ''}`}>
           {/* Symbol */}
           <button
             onClick={handleToggleComplete}
@@ -181,9 +181,9 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
 
             {/* Tags */}
             {item.tags.length > 0 && (
-              <div className="mt-4 text-xs text-text-secondary">
+              <div className="mt-2 text-xs text-text-secondary">
                 {item.tags.map((tag) => (
-                  <span key={tag} className="mr-8">
+                  <span key={tag} className="mr-6">
                     #{tag}
                   </span>
                 ))}
@@ -194,7 +194,7 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
             {item.type === 'todo' && (
               <>
                 {(item as Todo).deadline && (
-                  <div className="mt-4 text-xs font-mono text-text-secondary">
+                  <div className="mt-2 text-xs font-mono text-text-secondary">
                     Due: {format(new Date((item as Todo).deadline!), 'MMM d, h:mm a')}
                   </div>
                 )}
@@ -203,7 +203,7 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
 
             {/* Additional metadata for routines */}
             {item.type === 'routine' && (
-              <div className="mt-4 text-xs font-mono text-text-secondary">
+              <div className="mt-2 text-xs font-mono text-text-secondary">
                 {(item as Routine).recurrencePattern.frequency === 'daily' && 'Every day'}
                 {(item as Routine).streak > 0 && ` (Streak: ${(item as Routine).streak})`}
               </div>
@@ -212,14 +212,14 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
             {/* Embedded notes preview */}
             {(item.type === 'todo' || item.type === 'event' || item.type === 'routine') &&
              'embeddedItems' in item && item.embeddedItems.length > 0 && (
-              <div className="mt-8 space-y-6">
+              <div className="mt-6 space-y-4">
                 {item.embeddedItems.map((noteId) => {
                   const embeddedNote = items.find(i => i.id === noteId && i.type === 'note');
 
                   if (!embeddedNote) {
                     // Broken link - note was deleted
                     return (
-                      <div key={noteId} className="border border-border-subtle rounded-sm px-8 py-6 bg-hover-bg">
+                      <div key={noteId} className="border border-border-subtle rounded-sm px-6 py-4 bg-hover-bg">
                         <p className="text-xs text-text-secondary italic">
                           [Note not found: {noteId}]
                         </p>
@@ -229,8 +229,8 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
 
                   // Display embedded note preview
                   return (
-                    <div key={noteId} className="border border-border-subtle rounded-sm px-8 py-6 bg-hover-bg">
-                      <div className="flex items-start gap-6">
+                    <div key={noteId} className="border border-border-subtle rounded-sm px-6 py-4 bg-hover-bg">
+                      <div className="flex items-start gap-4">
                         <span className="text-xs text-text-secondary">↝</span>
                         <p className="text-xs font-serif italic text-text-secondary">
                           {embeddedNote.content}
@@ -247,7 +247,7 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
 
       {/* Recursively render sub-items */}
       {subItems.length > 0 && (
-        <div className="mt-12">
+        <div className="mt-8">
           {subItems.map(subItem => (
             <ItemDisplay key={subItem.id} item={subItem} depth={depth + 1} showTime={showTime} />
           ))}

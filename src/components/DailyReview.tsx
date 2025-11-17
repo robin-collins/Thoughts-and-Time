@@ -83,10 +83,10 @@ function DailyReview() {
   const allHandled = false; // TODO: Track which items have been handled
 
   return (
-    <div className="mb-48">
+    <div className="mb-32">
       {/* Daily Review Header */}
-      <div className="mb-16">
-        <div className="flex items-center gap-8">
+      <div className="mb-12">
+        <div className="flex items-center gap-6">
           <span className="text-base leading-book">
             {allHandled ? '□' : '■'}
           </span>
@@ -95,22 +95,22 @@ function DailyReview() {
       </div>
 
       {/* Review Items */}
-      <div className="space-y-16 pl-24">
+      <div className="space-y-12 pl-20">
         {reviewItems.map(({ item, waitingDays }) => (
           <div key={item.id} className="group">
-            <div className="flex items-start gap-8 mb-8">
+            <div className="flex items-start gap-6 mb-6">
               <span className="text-base leading-book flex-shrink-0 text-text-secondary">•</span>
               <div className="flex-1">
                 <p className="text-base font-serif leading-book">
                   {item.content}
-                  <span className="text-xs font-mono text-text-secondary ml-8">
+                  <span className="text-xs font-mono text-text-secondary ml-6">
                     (waiting {waitingDays} {waitingDays === 1 ? 'day' : 'days'})
                   </span>
                 </p>
                 {item.tags.length > 0 && (
-                  <div className="mt-4 text-xs text-text-secondary">
+                  <div className="mt-2 text-xs text-text-secondary">
                     {item.tags.map((tag) => (
-                      <span key={tag} className="mr-8">
+                      <span key={tag} className="mr-6">
                         #{tag}
                       </span>
                     ))}
@@ -121,17 +121,17 @@ function DailyReview() {
 
             {/* Action Buttons */}
             {showRescheduler === item.id ? (
-              <div className="flex items-center gap-8 pl-24">
+              <div className="flex items-center gap-6 pl-20">
                 <input
                   type="time"
                   value={selectedTime}
                   onChange={(e) => setSelectedTime(e.target.value)}
-                  className="bg-background border border-border-subtle px-8 py-4 font-mono text-sm outline-none focus:border-text-secondary"
+                  className="bg-background border border-border-subtle px-6 py-3 font-mono text-sm outline-none focus:border-text-secondary"
                   autoFocus
                 />
                 <button
                   onClick={() => confirmReschedule(item.id)}
-                  className="px-8 py-4 text-xs font-mono hover:opacity-70"
+                  className="px-6 py-3 text-xs font-mono hover:opacity-70"
                 >
                   Confirm
                 </button>
@@ -140,30 +140,30 @@ function DailyReview() {
                     setShowRescheduler(null);
                     setSelectedTime('');
                   }}
-                  className="px-8 py-4 text-xs font-mono text-text-secondary hover:opacity-70"
+                  className="px-6 py-3 text-xs font-mono text-text-secondary hover:opacity-70"
                 >
                   Cancel
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-12 pl-24">
+              <div className="flex items-center gap-8 pl-20">
                 <button
                   onClick={() => handleReschedule(item.id)}
-                  className="w-24 h-24 flex items-center justify-center hover:opacity-70 active:opacity-50"
+                  className="w-20 h-20 flex items-center justify-center hover:opacity-70 active:opacity-50"
                   title="Reschedule"
                 >
                   <span className="text-sm">↷</span>
                 </button>
                 <button
                   onClick={() => handleComplete(item.id)}
-                  className="w-24 h-24 flex items-center justify-center hover:opacity-70 active:opacity-50"
+                  className="w-20 h-20 flex items-center justify-center hover:opacity-70 active:opacity-50"
                   title="Complete"
                 >
                   <span className="text-sm">✓</span>
                 </button>
                 <button
                   onClick={() => handleCancel(item.id)}
-                  className="w-24 h-24 flex items-center justify-center hover:opacity-70 active:opacity-50 text-text-secondary"
+                  className="w-20 h-20 flex items-center justify-center hover:opacity-70 active:opacity-50 text-text-secondary"
                   title="Cancel"
                 >
                   <span className="text-sm">×</span>
@@ -175,7 +175,7 @@ function DailyReview() {
       </div>
 
       {/* Separator */}
-      <div className="mt-24 border-t border-border-subtle" />
+      <div className="mt-16 border-t border-border-subtle" />
     </div>
   );
 }

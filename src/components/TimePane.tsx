@@ -154,7 +154,7 @@ function TimePane() {
 
       return (
         <div
-          className={`flex items-start gap-8 ${isCompleted ? 'opacity-40' : ''}`}
+          className={`flex items-start gap-6 ${isCompleted ? 'opacity-40' : ''}`}
           onMouseEnter={() => setHoveredItem(item.id)}
           onMouseLeave={() => setHoveredItem(null)}
         >
@@ -222,9 +222,9 @@ function TimePane() {
               </div>
             )}
             {!isEditing && item.tags.length > 0 && (
-              <div className="mt-4 text-xs text-text-secondary">
+              <div className="mt-2 text-xs text-text-secondary">
                 {item.tags.map((tag) => (
-                  <span key={tag} className="mr-8">
+                  <span key={tag} className="mr-6">
                     #{tag}
                   </span>
                 ))}
@@ -242,7 +242,7 @@ function TimePane() {
 
       return (
         <div
-          className="flex items-start gap-8"
+          className="flex items-start gap-6"
           onMouseEnter={() => setHoveredItem(item.id)}
           onMouseLeave={() => setHoveredItem(null)}
         >
@@ -305,9 +305,9 @@ function TimePane() {
               </div>
             )}
             {!isEditing && item.tags.length > 0 && (
-              <div className="mt-4 text-xs text-text-secondary">
+              <div className="mt-2 text-xs text-text-secondary">
                 {item.tags.map((tag) => (
-                  <span key={tag} className="mr-8">
+                  <span key={tag} className="mr-6">
                     #{tag}
                   </span>
                 ))}
@@ -325,7 +325,7 @@ function TimePane() {
 
       return (
         <div
-          className="flex items-start gap-8"
+          className="flex items-start gap-6"
           onMouseEnter={() => setHoveredItem(item.id)}
           onMouseLeave={() => setHoveredItem(null)}
         >
@@ -388,9 +388,9 @@ function TimePane() {
               </div>
             )}
             {!isEditing && item.tags.length > 0 && (
-              <div className="mt-4 text-xs text-text-secondary">
+              <div className="mt-2 text-xs text-text-secondary">
                 {item.tags.map((tag) => (
-                  <span key={tag} className="mr-8">
+                  <span key={tag} className="mr-6">
                     #{tag}
                   </span>
                 ))}
@@ -402,7 +402,7 @@ function TimePane() {
     } else {
       // event-end
       return (
-        <div className="flex items-start gap-8">
+        <div className="flex items-start gap-6">
           <span className="text-base leading-book flex-shrink-0">⇥</span>
           <div className="flex-1">
             <p className="text-base font-serif leading-book font-semibold">
@@ -417,14 +417,14 @@ function TimePane() {
   return (
     <div className="h-full flex flex-col">
       {/* Pane Header */}
-      <div className="h-[40px] border-b border-border-subtle flex items-center px-32">
+      <div className="h-[36px] border-b border-border-subtle flex items-center px-24">
         <h2 className="text-xs font-serif uppercase tracking-wider">Time</h2>
       </div>
 
       {/* Timeline - Scrollable through all days */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-32 py-24"
+        className="flex-1 overflow-y-auto px-24 py-16"
       >
         {/* Daily Review - appears at top */}
         <DailyReview />
@@ -456,9 +456,9 @@ function TimePane() {
           });
 
           return (
-            <div key={date} className="mb-48">
+            <div key={date} className="mb-32">
               {/* Date Header */}
-              <div className={`sticky top-0 bg-background py-8 mb-16 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
+              <div className={`sticky top-0 bg-background py-6 mb-12 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
                 <h3 className="text-xs font-mono uppercase tracking-wider">
                   {format(parseISO(date), 'EEEE, MMM d, yyyy')}
                   {isToday && ' (Today)'}
@@ -466,13 +466,13 @@ function TimePane() {
               </div>
 
               {/* Items for this date */}
-              <div className="space-y-20">
+              <div className="space-y-14">
                 {times.map((time) => (
                   <div key={time}>
-                    <div className="text-xs font-mono text-text-secondary mb-8">
+                    <div className="text-xs font-mono text-text-secondary mb-6">
                       {time}
                     </div>
-                    <div className="space-y-16">
+                    <div className="space-y-10">
                       {entriesByTime[time].map((entry, idx) => (
                         <div key={`${entry.item.id}-${entry.type}-${idx}`}>
                           {renderEntry(entry)}
