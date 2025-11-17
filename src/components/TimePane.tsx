@@ -7,7 +7,7 @@ import { Item, Todo, Event as EventType } from '../types';
 type TimelineEntry = {
   time: Date;
   timeKey: string;
-  type: 'todo' | 'event-start' | 'event-end';
+  type: 'todo' | 'event-start' | 'event-end' | 'event-single';
   item: Item;
 };
 
@@ -19,6 +19,28 @@ function TimePane() {
   // Compute timeline entries grouped by date
   const entriesByDate = new Map<string, TimelineEntry[]>();
 
+  // First, collect all scheduled todos for checking event overlaps
+  const scheduledTodos: Array<{ time: Date; item: Todo }> = [];
+  items.forEach((item) => {
+    if (item.type === 'todo') {
+      const todo = item as Todo;
+      if (todo.scheduledTime) {
+        scheduledTodos.push({ time: new Date(todo.scheduledTime), item: todo });
+      }
+    }
+  });
+
+  // Helper function to check if event has items within its timeframe
+  const hasItemsWithinEvent = (event: EventType): boolean => {
+    const startTime = new Date(event.startTime);
+    const endTime = new Date(event.endTime);
+
+    return scheduledTodos.some(({ time }) => {
+      return time > startTime && time < endTime;
+    });
+  };
+
+  // Now process all items
   items.forEach((item) => {
     if (item.type === 'todo') {
       const todo = item as Todo;
@@ -44,21 +66,31 @@ function TimePane() {
         entriesByDate.set(dateKey, []);
       }
 
-      // Add event start marker
-      entriesByDate.get(dateKey)!.push({
-        time: startTime,
-        timeKey: format(startTime, 'h:mm a'),
-        type: 'event-start',
-        item,
-      });
+      // Check if event should be split
+      if (hasItemsWithinEvent(event)) {
+        // Split event: add start and end markers
+        entriesByDate.get(dateKey)!.push({
+          time: startTime,
+          timeKey: format(startTime, 'h:mm a'),
+          type: 'event-start',
+          item,
+        });
 
-      // Add event end marker
-      entriesByDate.get(dateKey)!.push({
-        time: endTime,
-        timeKey: format(endTime, 'h:mm a'),
-        type: 'event-end',
-        item,
-      });
+        entriesByDate.get(dateKey)!.push({
+          time: endTime,
+          timeKey: format(endTime, 'h:mm a'),
+          type: 'event-end',
+          item,
+        });
+      } else {
+        // Single event: no split
+        entriesByDate.get(dateKey)!.push({
+          time: startTime,
+          timeKey: format(startTime, 'h:mm a'),
+          type: 'event-single',
+          item,
+        });
+      }
     }
   });
 
@@ -100,6 +132,30 @@ function TimePane() {
           <div className="flex-1">
             <p className={`text-base font-serif leading-book ${isCompleted ? 'line-through' : ''}`}>
               {item.content}
+            </p>
+            {item.tags.length > 0 && (
+              <div className="mt-6 text-sm text-text-secondary">
+                {item.tags.map((tag) => (
+                  <span key={tag} className="mr-12">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    } else if (entry.type === 'event-single') {
+      const event = item as EventType;
+      const startTime = format(new Date(event.startTime), 'h:mm a');
+      const endTime = format(new Date(event.endTime), 'h:mm a');
+
+      return (
+        <div className="flex items-start gap-12">
+          <span className="text-base leading-book flex-shrink-0">⇹</span>
+          <div className="flex-1">
+            <p className="text-base font-serif leading-book font-semibold">
+              {item.content} ({startTime} - {endTime})
             </p>
             {item.tags.length > 0 && (
               <div className="mt-6 text-sm text-text-secondary">
