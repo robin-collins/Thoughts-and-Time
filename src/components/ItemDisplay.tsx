@@ -14,10 +14,11 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
   const toggleTodoComplete = useStore((state) => state.toggleTodoComplete);
   const updateItem = useStore((state) => state.updateItem);
   const deleteItem = useStore((state) => state.deleteItem);
+  const addItem = useStore((state) => state.addItem);
   const items = useStore((state) => state.items);
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(item.content);
+  const [editContent, setEditContent] = useState('');
 
   const getSymbol = () => {
     switch (item.type) {
@@ -32,6 +33,22 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
         return '↝';
       default:
         return '';
+    }
+  };
+
+  // Get prefix for item type
+  const getPrefix = () => {
+    switch (item.type) {
+      case 'todo':
+        return 't';
+      case 'event':
+        return 'e';
+      case 'routine':
+        return 'r';
+      case 'note':
+        return '*';
+      default:
+        return '*';
     }
   };
 
@@ -51,16 +68,73 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
   };
 
   const handleEdit = () => {
+    // Initialize edit content with prefix + content
+    const prefix = getPrefix();
+    setEditContent(`${prefix} ${item.content}`);
     setIsEditing(true);
   };
 
   const handleSaveEdit = () => {
-    if (editContent.trim() && editContent !== item.content) {
-      // Re-parse the content to extract new date/time information
-      const parsed = parseInput(editContent.trim());
+    if (!editContent.trim()) {
+      setIsEditing(false);
+      return;
+    }
 
-      // Build updates object based on item type
-      const updates: Partial<Item> = { content: parsed.content };
+    // Convert symbols back to prefixes before parsing
+    const contentWithPrefix = symbolsToPrefix(editContent.trim());
+
+    // Re-parse the full line (with prefix) to detect type changes
+    const parsed = parseInput(contentWithPrefix);
+
+    // If type changed, delete old item and create new one
+    if (parsed.type !== item.type) {
+      // Create new item with parsed data
+      const newItemData = {
+        content: parsed.content,
+        tags: parsed.tags,
+        type: parsed.type,
+        createdAt: item.createdAt, // Preserve original creation time
+        createdDate: item.createdDate,
+      };
+
+      // Add type-specific fields
+      if (parsed.type === 'todo') {
+        Object.assign(newItemData, {
+          scheduledTime: parsed.scheduledTime,
+          hasTime: parsed.hasTime,
+          deadline: parsed.deadline,
+          completedAt: null,
+          subtasks: [],
+          embeddedItems: [],
+        });
+      } else if (parsed.type === 'event') {
+        Object.assign(newItemData, {
+          startTime: parsed.scheduledTime || new Date(),
+          endTime: parsed.endTime || parsed.scheduledTime || new Date(),
+          hasTime: parsed.hasTime,
+          embeddedItems: [],
+        });
+      } else if (parsed.type === 'routine') {
+        Object.assign(newItemData, {
+          scheduledTime: parsed.scheduledTime ? format(parsed.scheduledTime, 'HH:mm') : '09:00',
+          hasTime: parsed.hasTime,
+          recurrencePattern: parsed.recurrencePattern || { frequency: 'daily', interval: 1 },
+          streak: 0,
+          lastCompleted: null,
+          embeddedItems: [],
+        });
+      } else if (parsed.type === 'note') {
+        Object.assign(newItemData, {
+          subItems: [],
+        });
+      }
+
+      // Delete old and add new
+      deleteItem(item.id);
+      addItem(newItemData as any);
+    } else {
+      // Same type, just update
+      const updates: Partial<Item> = { content: parsed.content, tags: parsed.tags };
 
       if (item.type === 'todo') {
         Object.assign(updates, {
@@ -84,12 +158,103 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
 
       updateItem(item.id, updates);
     }
+
     setIsEditing(false);
   };
 
   const handleCancelEdit = () => {
-    setEditContent(item.content);
+    setEditContent('');
     setIsEditing(false);
+  };
+
+  // Helper: Convert symbols back to prefixes for parsing
+  const symbolsToPrefix = (text: string): string => {
+    return text
+      .replace(/^(\s*)↹\s/, '$1e ')
+      .replace(/^(\s*)□\s/, '$1t ')
+      .replace(/^(\s*)☑\s/, '$1t ')
+      .replace(/^(\s*)↻\s/, '$1r ')
+      .replace(/^(\s*)↝\s/, '$1* ');
+  };
+
+  // Handle input change with symbol conversion
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    const cursorPos = e.target.selectionStart || 0;
+
+    // Check if a space was just added
+    if (newValue.length > editContent.length && newValue[cursorPos - 1] === ' ') {
+      const beforeSpace = newValue.substring(0, cursorPos - 1).trim();
+
+      // Check if it matches a prefix
+      const prefixToSymbol: { [key: string]: string } = {
+        'e': '↹',
+        't': '□',
+        'r': '↻',
+        '*': '↝',
+      };
+
+      if (prefixToSymbol[beforeSpace]) {
+        // Replace prefix with symbol
+        const symbol = prefixToSymbol[beforeSpace];
+        const updatedValue = symbol + ' ' + newValue.substring(cursorPos);
+        setEditContent(updatedValue);
+
+        // Move cursor to after the symbol and space
+        setTimeout(() => {
+          const input = e.target;
+          const newCursorPos = symbol.length + 1;
+          input.selectionStart = input.selectionEnd = newCursorPos;
+        }, 0);
+        return;
+      }
+    }
+
+    setEditContent(newValue);
+  };
+
+  // Handle keydown for backspace (revert symbol to prefix)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSaveEdit();
+      return;
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+      return;
+    }
+
+    const input = e.currentTarget;
+    const { selectionStart, selectionEnd, value } = input;
+
+    // Backspace: check if we need to revert symbol to prefix
+    if (e.key === 'Backspace' && selectionStart === selectionEnd) {
+      const charBeforeCursor = value[selectionStart! - 1];
+      const charBeforeThat = value[selectionStart! - 2];
+
+      // If we're deleting a space after a symbol, revert to prefix
+      if (charBeforeCursor === ' ' && selectionStart! === 2) {
+        const symbolToPrefix: { [key: string]: string } = {
+          '↹': 'e',
+          '□': 't',
+          '☑': 't',
+          '↻': 'r',
+          '↝': '*',
+        };
+
+        if (charBeforeThat && symbolToPrefix[charBeforeThat]) {
+          // Revert symbol + space to prefix
+          e.preventDefault();
+          const prefix = symbolToPrefix[charBeforeThat];
+          const newValue = prefix + value.substring(selectionStart!);
+          setEditContent(newValue);
+
+          setTimeout(() => {
+            input.selectionStart = input.selectionEnd = prefix.length;
+          }, 0);
+          return;
+        }
+      }
+    }
   };
 
   const handleDelete = () => {
@@ -147,14 +312,8 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
                 <input
                   type="text"
                   value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSaveEdit();
-                    } else if (e.key === 'Escape') {
-                      handleCancelEdit();
-                    }
-                  }}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
                   className="flex-1 px-8 py-4 bg-hover-bg border border-border-subtle rounded-sm font-serif text-base"
                   autoFocus
                 />
