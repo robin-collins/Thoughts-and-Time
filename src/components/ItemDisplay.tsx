@@ -122,7 +122,7 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
       >
         {/* Timestamp (only for top-level) */}
         {depth === 0 && (
-          <div className="text-xs font-mono text-text-secondary mb-1">
+          <div className="text-xs font-mono text-text-secondary mt-3 mb-0.5">
             {getTimeDisplay()}
           </div>
         )}
