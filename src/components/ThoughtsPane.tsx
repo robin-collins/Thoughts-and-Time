@@ -31,6 +31,7 @@ function ThoughtsPane({
   const [promptedEndTime, setPromptedEndTime] = useState('');
   const [isPageFlipping, setIsPageFlipping] = useState(false);
   const lastScrollTop = useRef(0);
+  const isTransitioning = useRef(false);
 
   // Filter function: recursively check if item or its children match search
   const matchesSearch = (item: Item, query: string): boolean => {
@@ -377,34 +378,47 @@ function ThoughtsPane({
     setIsAtBottom(atBottom);
 
     // Book mode: detect when user tries to scroll beyond boundaries
-    if (viewMode === 'book' && onNextDay && onPreviousDay) {
+    if (viewMode === 'book' && onNextDay && onPreviousDay && !isTransitioning.current) {
       const scrollDirection = scrollTop > lastScrollTop.current ? 'down' : 'up';
       lastScrollTop.current = scrollTop;
 
+      // Only detect boundary if content is scrollable (taller than container)
+      const isScrollable = scrollHeight > clientHeight;
+
       // At bottom, trying to scroll down = next day
-      if (scrollTop + clientHeight >= scrollHeight - 5 && scrollDirection === 'down') {
+      if (isScrollable && scrollTop + clientHeight >= scrollHeight - 1 && scrollDirection === 'down') {
+        isTransitioning.current = true;
         setIsPageFlipping(true);
         setTimeout(() => {
           onNextDay();
-          if (scrollRef.current) {
-            scrollRef.current.scrollTop = 0; // Reset to top of new page
-          }
+          // Wait for React to re-render with new content before resetting scroll
           setTimeout(() => {
-            setIsPageFlipping(false);
-          }, 600);
+            if (scrollRef.current) {
+              scrollRef.current.scrollTop = 0;
+            }
+            setTimeout(() => {
+              setIsPageFlipping(false);
+              isTransitioning.current = false;
+            }, 600);
+          }, 50);
         }, 50);
       }
       // At top, trying to scroll up = previous day
-      else if (scrollTop <= 5 && scrollDirection === 'up') {
+      else if (scrollTop <= 1 && scrollDirection === 'up') {
+        isTransitioning.current = true;
         setIsPageFlipping(true);
         setTimeout(() => {
           onPreviousDay();
-          if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight; // Scroll to bottom of new page
-          }
+          // Wait for React to re-render with new content before resetting scroll
           setTimeout(() => {
-            setIsPageFlipping(false);
-          }, 600);
+            if (scrollRef.current) {
+              scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            }
+            setTimeout(() => {
+              setIsPageFlipping(false);
+              isTransitioning.current = false;
+            }, 600);
+          }, 50);
         }, 50);
       }
     }
