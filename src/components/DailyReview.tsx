@@ -83,10 +83,10 @@ function DailyReview() {
   const allHandled = false; // TODO: Track which items have been handled
 
   return (
-    <div className="mb-32">
+    <div className="mb-16">
       {/* Daily Review Header */}
-      <div className="mb-12">
-        <div className="flex items-center gap-6">
+      <div className="mb-6">
+        <div className="flex items-center gap-4">
           <span className="text-base leading-book">
             {allHandled ? '□' : '■'}
           </span>
@@ -95,10 +95,10 @@ function DailyReview() {
       </div>
 
       {/* Review Items */}
-      <div className="space-y-12 pl-20">
+      <div className="space-y-6 pl-16">
         {reviewItems.map(({ item, waitingDays }) => (
           <div key={item.id} className="group">
-            <div className="flex items-start gap-6 mb-6">
+            <div className="flex items-start gap-3 mb-3">
               <span className="text-base leading-book flex-shrink-0 text-text-secondary">•</span>
               <div className="flex-1">
                 <p className="text-base font-serif leading-book">
@@ -121,7 +121,7 @@ function DailyReview() {
 
             {/* Action Buttons */}
             {showRescheduler === item.id ? (
-              <div className="flex items-center gap-6 pl-20">
+              <div className="flex items-center gap-4 pl-16">
                 <input
                   type="time"
                   value={selectedTime}
@@ -146,24 +146,24 @@ function DailyReview() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-8 pl-20">
+              <div className="flex items-center gap-6 pl-16">
                 <button
                   onClick={() => handleReschedule(item.id)}
-                  className="w-20 h-20 flex items-center justify-center hover:opacity-70 active:opacity-50"
+                  className="w-18 h-18 flex items-center justify-center hover:opacity-70 active:opacity-50"
                   title="Reschedule"
                 >
                   <span className="text-sm">↷</span>
                 </button>
                 <button
                   onClick={() => handleComplete(item.id)}
-                  className="w-20 h-20 flex items-center justify-center hover:opacity-70 active:opacity-50"
+                  className="w-18 h-18 flex items-center justify-center hover:opacity-70 active:opacity-50"
                   title="Complete"
                 >
                   <span className="text-sm">✓</span>
                 </button>
                 <button
                   onClick={() => handleCancel(item.id)}
-                  className="w-20 h-20 flex items-center justify-center hover:opacity-70 active:opacity-50 text-text-secondary"
+                  className="w-18 h-18 flex items-center justify-center hover:opacity-70 active:opacity-50 text-text-secondary"
                   title="Cancel"
                 >
                   <span className="text-sm">×</span>
@@ -175,7 +175,7 @@ function DailyReview() {
       </div>
 
       {/* Separator */}
-      <div className="mt-16 border-t border-border-subtle" />
+      <div className="mt-8 border-t border-border-subtle" />
     </div>
   );
 }

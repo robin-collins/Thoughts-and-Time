@@ -332,9 +332,9 @@ function ThoughtsPane() {
           }
 
           return (
-            <div key={date} className="mb-24">
+            <div key={date} className="mb-16">
               {/* Date Header */}
-              <div className={`sticky top-0 bg-background py-4 mb-8 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
+              <div className={`sticky top-0 bg-background py-2 mb-4 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
                 <h3 className="text-xs font-mono uppercase tracking-wider">
                   {format(parseISO(date), 'EEEE, MMM d, yyyy')}
                   {isToday && ' (Today)'}
@@ -343,11 +343,11 @@ function ThoughtsPane() {
 
               {/* Items for this date */}
               {items.length === 0 ? (
-                <div className="text-center text-text-secondary text-sm py-8">
+                <div className="text-center text-text-secondary text-sm py-4">
                   <p>Nothing captured yet</p>
                 </div>
               ) : (
-                <div className="space-y-10">
+                <div className="space-y-6">
                   {/* Only render top-level items (sub-items are rendered recursively) */}
                   {items.filter(item => !item.parentId).map((item) => (
                     <ItemDisplay key={item.id} item={item} />
