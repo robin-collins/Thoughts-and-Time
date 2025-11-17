@@ -46,9 +46,10 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
       case 'routine':
         return 'r';
       case 'note':
-        return '*';
+        // Top-level notes have no prefix, subnotes use *
+        return depth > 0 ? '*' : '';
       default:
-        return '*';
+        return depth > 0 ? '*' : '';
     }
   };
 
@@ -70,7 +71,12 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
   const handleEdit = () => {
     // Initialize edit content with prefix + content
     const prefix = getPrefix();
-    setEditContent(`${prefix} ${item.content}`);
+    if (prefix) {
+      setEditContent(`${prefix} ${item.content}`);
+    } else {
+      // Top-level notes have no prefix
+      setEditContent(item.content);
+    }
     setIsEditing(true);
   };
 

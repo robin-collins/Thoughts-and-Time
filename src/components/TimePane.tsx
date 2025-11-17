@@ -292,16 +292,22 @@ function TimePane({
       case 'routine':
         return 'r';
       case 'note':
-        return '*';
+        // Timeline entries are top-level, so notes have no prefix
+        return '';
       default:
-        return '*';
+        return '';
     }
   };
 
   const handleEdit = (itemId: string, item: Item) => {
     const prefix = getPrefix(item);
     setEditingItem(itemId);
-    setEditContent(`${prefix} ${item.content}`);
+    if (prefix) {
+      setEditContent(`${prefix} ${item.content}`);
+    } else {
+      // Notes have no prefix
+      setEditContent(item.content);
+    }
   };
 
   // Helper: Convert symbols back to prefixes for parsing
