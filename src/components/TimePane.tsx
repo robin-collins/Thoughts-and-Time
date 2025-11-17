@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
 import DailyReview from './DailyReview';
-import { Item, Todo, Event as EventType, Note } from '../types';
+import { Item, Todo, Event as EventType, Note, Routine } from '../types';
+import { parseInput } from '../utils/parser';
 
 type TimelineEntry = {
   time: Date;
@@ -167,8 +168,35 @@ function TimePane({ searchQuery = '' }: TimePaneProps) {
   };
 
   const handleSaveEdit = (itemId: string) => {
-    if (editContent.trim() && editContent !== items.find(i => i.id === itemId)?.content) {
-      updateItem(itemId, { content: editContent.trim() });
+    const currentItem = items.find(i => i.id === itemId);
+    if (editContent.trim() && currentItem && editContent !== currentItem.content) {
+      // Re-parse the content to extract new date/time information
+      const parsed = parseInput(editContent.trim());
+
+      // Build updates object based on item type
+      const updates: Partial<Item> = { content: parsed.content };
+
+      if (currentItem.type === 'todo') {
+        Object.assign(updates, {
+          scheduledTime: parsed.scheduledTime,
+          hasTime: parsed.hasTime,
+          deadline: parsed.deadline,
+        });
+      } else if (currentItem.type === 'event') {
+        Object.assign(updates, {
+          startTime: parsed.scheduledTime || (currentItem as EventType).startTime,
+          endTime: parsed.endTime || parsed.scheduledTime || (currentItem as EventType).endTime,
+          hasTime: parsed.hasTime,
+        });
+      } else if (currentItem.type === 'routine') {
+        Object.assign(updates, {
+          scheduledTime: parsed.scheduledTime ? format(parsed.scheduledTime, 'HH:mm') : (currentItem as Routine).scheduledTime,
+          hasTime: parsed.hasTime,
+          recurrencePattern: parsed.recurrencePattern || (currentItem as Routine).recurrencePattern,
+        });
+      }
+
+      updateItem(itemId, updates);
     }
     setEditingItem(null);
     setEditContent('');

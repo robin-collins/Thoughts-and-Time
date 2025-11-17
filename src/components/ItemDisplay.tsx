@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Item, Todo, Routine, Note } from '../types';
+import { Item, Todo, Routine, Note, Event } from '../types';
 import { useStore } from '../store/useStore';
+import { parseInput } from '../utils/parser';
 
 interface ItemDisplayProps {
   item: Item;
@@ -55,7 +56,33 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
 
   const handleSaveEdit = () => {
     if (editContent.trim() && editContent !== item.content) {
-      updateItem(item.id, { content: editContent.trim() });
+      // Re-parse the content to extract new date/time information
+      const parsed = parseInput(editContent.trim());
+
+      // Build updates object based on item type
+      const updates: Partial<Item> = { content: parsed.content };
+
+      if (item.type === 'todo') {
+        Object.assign(updates, {
+          scheduledTime: parsed.scheduledTime,
+          hasTime: parsed.hasTime,
+          deadline: parsed.deadline,
+        });
+      } else if (item.type === 'event') {
+        Object.assign(updates, {
+          startTime: parsed.scheduledTime || (item as Event).startTime,
+          endTime: parsed.endTime || parsed.scheduledTime || (item as Event).endTime,
+          hasTime: parsed.hasTime,
+        });
+      } else if (item.type === 'routine') {
+        Object.assign(updates, {
+          scheduledTime: parsed.scheduledTime ? format(parsed.scheduledTime, 'HH:mm') : (item as Routine).scheduledTime,
+          hasTime: parsed.hasTime,
+          recurrencePattern: parsed.recurrencePattern || (item as Routine).recurrencePattern,
+        });
+      }
+
+      updateItem(item.id, updates);
     }
     setIsEditing(false);
   };
