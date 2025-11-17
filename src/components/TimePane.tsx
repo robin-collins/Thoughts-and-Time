@@ -494,7 +494,7 @@ function TimePane({ searchQuery = '' }: TimePaneProps) {
       {/* Timeline - Scrollable through all days */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-24 py-16"
+        className="flex-1 overflow-y-auto px-24 py-16 snap-y snap-mandatory"
       >
         {/* Daily Review - appears at top */}
         <DailyReview />
@@ -526,7 +526,7 @@ function TimePane({ searchQuery = '' }: TimePaneProps) {
           });
 
           return (
-            <div key={date} className="mb-16">
+            <div key={date} className="mb-16 snap-start">
               {/* Date Header */}
               <div className={`sticky top-0 bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}>
                 <h3 className="text-base font-serif uppercase tracking-wide">

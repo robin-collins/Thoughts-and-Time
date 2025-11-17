@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import ThoughtsPane from './components/ThoughtsPane';
 import TimePane from './components/TimePane';
+import Settings from './components/Settings';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
     <div className="h-full flex flex-col bg-background text-text-primary">
+      {/* Settings Modal */}
+      <Settings isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
       {/* Header */}
       <header className="h-[60px] border-b border-border-subtle flex items-center justify-between px-48">
         <h1 className="text-lg font-serif">Thoughts & Time</h1>
@@ -38,6 +43,13 @@ function App() {
             title="Search"
           >
             🔍
+          </button>
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="text-base hover:opacity-70 transition-opacity"
+            title="Settings"
+          >
+            ⚙️
           </button>
         </div>
       </header>

@@ -5,12 +5,26 @@
 @tailwind utilities;
 
 @layer base {
+  /* Dark theme (default) */
+  :root,
+  [data-theme="dark"] {
+    --color-background: #0A0A0A;
+    --color-text-primary: #F5F5F5;
+    --color-text-secondary: #6A6A6A;
+    --color-border-subtle: #1A1A1A;
+    --color-hover-bg: #0F0F0F;
+  }
+
+  /* Light theme */
+  [data-theme="light"] {
+    --color-background: #FAFAF8;
+    --color-text-primary: #1A1A1A;
+    --color-text-secondary: #6A6A6A;
+    --color-border-subtle: #E5E5E5;
+    --color-hover-bg: #F0F0EE;
+  }
+
   :root {
-    --background: #0A0A0A;
-    --text-primary: #F5F5F5;
-    --text-secondary: #6A6A6A;
-    --border-subtle: #1A1A1A;
-    --hover-bg: #0F0F0F;
     --text-base: 18px;
     --text-sm: 15px;
     --text-xs: 14px;
@@ -29,8 +43,8 @@
     font-family: "Crimson Text", Lora, Georgia, "Times New Roman", serif;
     font-size: var(--text-base);
     line-height: var(--line-height);
-    background-color: var(--background);
-    color: var(--text-primary);
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

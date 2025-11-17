@@ -7,11 +7,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        'background': '#0A0A0A',
-        'text-primary': '#F5F5F5',
-        'text-secondary': '#6A6A6A',
-        'border-subtle': '#1A1A1A',
-        'hover-bg': '#0F0F0F',
+        'background': 'var(--color-background)',
+        'text-primary': 'var(--color-text-primary)',
+        'text-secondary': 'var(--color-text-secondary)',
+        'border-subtle': 'var(--color-border-subtle)',
+        'hover-bg': 'var(--color-hover-bg)',
       },
       fontFamily: {
         'serif': ['"Crimson Text"', 'Lora', 'Georgia', '"Times New Roman"', 'serif'],
