@@ -39,6 +39,9 @@ function TimePane({
   const lastScrollTop = useRef(0);
   const isTransitioning = useRef(false);
   const wheelDeltaY = useRef(0);
+  const [timePrompt, setTimePrompt] = useState<{ content: string; isEvent: boolean; itemId: string } | null>(null);
+  const [promptedTime, setPromptedTime] = useState('');
+  const [promptedEndTime, setPromptedEndTime] = useState('');
 
   // Filter function: recursively check if item or its children match search
   const matchesSearch = (item: Item, query: string): boolean => {
@@ -335,6 +338,16 @@ function TimePane({
     // Re-parse the full line (with prefix) to detect type changes
     const parsed = parseInput(contentWithPrefix);
 
+    // Check if time prompt is needed
+    if (parsed.needsTimePrompt) {
+      setTimePrompt({
+        content: editContent.trim(),
+        isEvent: parsed.type === 'event',
+        itemId: itemId,
+      });
+      return;
+    }
+
     // If type changed, delete old item and create new one
     if (parsed.type !== currentItem.type) {
       // Create new item with parsed data
@@ -349,7 +362,7 @@ function TimePane({
       // Add type-specific fields
       if (parsed.type === 'todo') {
         Object.assign(newItemData, {
-          scheduledTime: parsed.scheduledTime || new Date(), // Default to now if no time specified
+          scheduledTime: parsed.scheduledTime,
           hasTime: parsed.hasTime,
           deadline: parsed.deadline,
           completedAt: null,
@@ -357,10 +370,9 @@ function TimePane({
           embeddedItems: [],
         });
       } else if (parsed.type === 'event') {
-        const defaultTime = new Date();
         Object.assign(newItemData, {
-          startTime: parsed.scheduledTime || defaultTime,
-          endTime: parsed.endTime || parsed.scheduledTime || new Date(defaultTime.getTime() + 60 * 60 * 1000), // Default 1 hour duration
+          startTime: parsed.scheduledTime || new Date(),
+          endTime: parsed.endTime || parsed.scheduledTime || new Date(),
           hasTime: parsed.hasTime,
           embeddedItems: [],
         });
@@ -417,6 +429,115 @@ function TimePane({
   const handleCancelEdit = () => {
     setEditingItem(null);
     setEditContent('');
+  };
+
+  const handleTimePromptSubmit = () => {
+    if (!timePrompt || !promptedTime) return;
+
+    // For events, also require end time
+    if (timePrompt.isEvent && !promptedEndTime) return;
+
+    const currentItem = items.find(i => i.id === timePrompt.itemId);
+    if (!currentItem) return;
+
+    // Update content with time
+    let updatedContent: string;
+    if (timePrompt.isEvent) {
+      // Events: "from X to Y"
+      updatedContent = timePrompt.content + ' from ' + promptedTime + ' to ' + promptedEndTime;
+    } else {
+      // Tasks/Routines: "at X"
+      updatedContent = timePrompt.content + ' at ' + promptedTime;
+    }
+
+    // Convert symbols back to prefixes before parsing
+    const contentWithPrefix = symbolsToPrefix(updatedContent);
+
+    // Re-parse with time included
+    const parsed = parseInput(contentWithPrefix);
+
+    // If type changed, delete old item and create new one
+    if (parsed.type !== currentItem.type) {
+      // Create new item with parsed data
+      const newItemData = {
+        content: parsed.content,
+        tags: parsed.tags,
+        type: parsed.type,
+        createdAt: currentItem.createdAt, // Preserve original creation time
+        createdDate: currentItem.createdDate,
+      };
+
+      // Add type-specific fields
+      if (parsed.type === 'todo') {
+        Object.assign(newItemData, {
+          scheduledTime: parsed.scheduledTime,
+          hasTime: parsed.hasTime,
+          deadline: parsed.deadline,
+          completedAt: null,
+          subtasks: [],
+          embeddedItems: [],
+        });
+      } else if (parsed.type === 'event') {
+        Object.assign(newItemData, {
+          startTime: parsed.scheduledTime || new Date(),
+          endTime: parsed.endTime || parsed.scheduledTime || new Date(),
+          hasTime: parsed.hasTime,
+          embeddedItems: [],
+        });
+      } else if (parsed.type === 'routine') {
+        Object.assign(newItemData, {
+          scheduledTime: parsed.scheduledTime ? format(parsed.scheduledTime, 'HH:mm') : '09:00',
+          hasTime: parsed.hasTime,
+          recurrencePattern: parsed.recurrencePattern || { frequency: 'daily', interval: 1 },
+          streak: 0,
+          lastCompleted: null,
+          embeddedItems: [],
+        });
+      }
+
+      // Delete old and add new
+      const addItem = useStore.getState().addItem;
+      deleteItem(timePrompt.itemId);
+      addItem(newItemData as any);
+    } else {
+      // Same type, just update
+      const updates: Partial<Item> = { content: parsed.content, tags: parsed.tags };
+
+      if (currentItem.type === 'todo') {
+        Object.assign(updates, {
+          scheduledTime: parsed.scheduledTime,
+          hasTime: parsed.hasTime,
+          deadline: parsed.deadline,
+        });
+      } else if (currentItem.type === 'event') {
+        Object.assign(updates, {
+          startTime: parsed.scheduledTime || (currentItem as EventType).startTime,
+          endTime: parsed.endTime || parsed.scheduledTime || (currentItem as EventType).endTime,
+          hasTime: parsed.hasTime,
+        });
+      } else if (currentItem.type === 'routine') {
+        Object.assign(updates, {
+          scheduledTime: parsed.scheduledTime ? format(parsed.scheduledTime, 'HH:mm') : (currentItem as Routine).scheduledTime,
+          hasTime: parsed.hasTime,
+          recurrencePattern: parsed.recurrencePattern || (currentItem as Routine).recurrencePattern,
+        });
+      }
+
+      updateItem(timePrompt.itemId, updates);
+    }
+
+    // Clear time prompt and editing state
+    setTimePrompt(null);
+    setPromptedTime('');
+    setPromptedEndTime('');
+    setEditingItem(null);
+    setEditContent('');
+  };
+
+  const handleTimePromptCancel = () => {
+    setTimePrompt(null);
+    setPromptedTime('');
+    setPromptedEndTime('');
   };
 
   // Handle input change with symbol conversion
@@ -759,11 +880,94 @@ function TimePane({
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Pane Header */}
-      <div className="h-[36px] border-b border-border-subtle flex items-center px-24">
-        <h2 className="text-xs font-serif uppercase tracking-wider">Time</h2>
-      </div>
+    <>
+      {/* Time Prompt Modal */}
+      {timePrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-background border border-border-subtle rounded-sm p-24 max-w-md w-full mx-16">
+            <h3 className="text-base font-serif mb-16">
+              {timePrompt.isEvent ? 'When does it start and end?' : 'What time?'}
+            </h3>
+            <p className="text-sm text-text-secondary mb-16 font-serif">{timePrompt.content}</p>
+
+            {timePrompt.isEvent ? (
+              // Event: show start and end times
+              <div className="space-y-12">
+                <div>
+                  <label className="block text-xs font-mono text-text-secondary mb-4">Start time</label>
+                  <input
+                    type="time"
+                    value={promptedTime}
+                    onChange={(e) => setPromptedTime(e.target.value)}
+                    className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleTimePromptSubmit();
+                      } else if (e.key === 'Escape') {
+                        handleTimePromptCancel();
+                      }
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-text-secondary mb-4">End time</label>
+                  <input
+                    type="time"
+                    value={promptedEndTime}
+                    onChange={(e) => setPromptedEndTime(e.target.value)}
+                    className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm mb-16"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleTimePromptSubmit();
+                      } else if (e.key === 'Escape') {
+                        handleTimePromptCancel();
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              // Task/Routine: show single time
+              <input
+                type="time"
+                value={promptedTime}
+                onChange={(e) => setPromptedTime(e.target.value)}
+                className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm mb-16"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleTimePromptSubmit();
+                  } else if (e.key === 'Escape') {
+                    handleTimePromptCancel();
+                  }
+                }}
+              />
+            )}
+
+            <div className="flex gap-8 justify-end mt-16">
+              <button
+                onClick={handleTimePromptCancel}
+                className="px-16 py-8 text-sm font-mono text-text-secondary hover:text-text-primary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTimePromptSubmit}
+                className="px-16 py-8 text-sm font-mono text-text-primary border border-border-subtle rounded-sm hover:bg-hover-bg"
+              >
+                {timePrompt.isEvent ? 'Add Times' : 'Add Time'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="h-full flex flex-col">
+        {/* Pane Header */}
+        <div className="h-[36px] border-b border-border-subtle flex items-center px-24">
+          <h2 className="text-xs font-serif uppercase tracking-wider">Time</h2>
+        </div>
 
       {/* Timeline - Scrollable through all days */}
       <div
@@ -845,7 +1049,8 @@ function TimePane({
           );
         })}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

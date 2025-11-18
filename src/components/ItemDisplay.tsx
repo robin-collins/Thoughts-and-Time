@@ -19,6 +19,9 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
+  const [timePrompt, setTimePrompt] = useState<{ content: string; isEvent: boolean } | null>(null);
+  const [promptedTime, setPromptedTime] = useState('');
+  const [promptedEndTime, setPromptedEndTime] = useState('');
 
   const getSymbol = () => {
     switch (item.type) {
@@ -94,6 +97,15 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
     // Re-parse the full line (with prefix) to detect type changes
     const parsed = parseInput(contentWithPrefix);
 
+    // Check if time prompt is needed
+    if (parsed.needsTimePrompt) {
+      setTimePrompt({
+        content: editContent.trim(),
+        isEvent: parsed.type === 'event',
+      });
+      return;
+    }
+
     // If type changed, delete old item and create new one
     if (parsed.type !== item.type) {
       // Create new item with parsed data
@@ -108,7 +120,7 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
       // Add type-specific fields
       if (parsed.type === 'todo') {
         Object.assign(newItemData, {
-          scheduledTime: parsed.scheduledTime || new Date(), // Default to now if no time specified
+          scheduledTime: parsed.scheduledTime,
           hasTime: parsed.hasTime,
           deadline: parsed.deadline,
           completedAt: null,
@@ -116,10 +128,9 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
           embeddedItems: [],
         });
       } else if (parsed.type === 'event') {
-        const defaultTime = new Date();
         Object.assign(newItemData, {
-          startTime: parsed.scheduledTime || defaultTime,
-          endTime: parsed.endTime || parsed.scheduledTime || new Date(defaultTime.getTime() + 60 * 60 * 1000), // Default 1 hour duration
+          startTime: parsed.scheduledTime || new Date(),
+          endTime: parsed.endTime || parsed.scheduledTime || new Date(),
           hasTime: parsed.hasTime,
           embeddedItems: [],
         });
@@ -174,6 +185,110 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
   const handleCancelEdit = () => {
     setEditContent('');
     setIsEditing(false);
+  };
+
+  const handleTimePromptSubmit = () => {
+    if (!timePrompt || !promptedTime) return;
+
+    // For events, also require end time
+    if (timePrompt.isEvent && !promptedEndTime) return;
+
+    // Update content with time
+    let updatedContent: string;
+    if (timePrompt.isEvent) {
+      // Events: "from X to Y"
+      updatedContent = timePrompt.content + ' from ' + promptedTime + ' to ' + promptedEndTime;
+    } else {
+      // Tasks/Routines: "at X"
+      updatedContent = timePrompt.content + ' at ' + promptedTime;
+    }
+
+    // Convert symbols back to prefixes before parsing
+    const contentWithPrefix = symbolsToPrefix(updatedContent);
+
+    // Re-parse with time included
+    const parsed = parseInput(contentWithPrefix);
+
+    // If type changed, delete old item and create new one
+    if (parsed.type !== item.type) {
+      // Create new item with parsed data
+      const newItemData = {
+        content: parsed.content,
+        tags: parsed.tags,
+        type: parsed.type,
+        createdAt: item.createdAt, // Preserve original creation time
+        createdDate: item.createdDate,
+      };
+
+      // Add type-specific fields
+      if (parsed.type === 'todo') {
+        Object.assign(newItemData, {
+          scheduledTime: parsed.scheduledTime,
+          hasTime: parsed.hasTime,
+          deadline: parsed.deadline,
+          completedAt: null,
+          subtasks: [],
+          embeddedItems: [],
+        });
+      } else if (parsed.type === 'event') {
+        Object.assign(newItemData, {
+          startTime: parsed.scheduledTime || new Date(),
+          endTime: parsed.endTime || parsed.scheduledTime || new Date(),
+          hasTime: parsed.hasTime,
+          embeddedItems: [],
+        });
+      } else if (parsed.type === 'routine') {
+        Object.assign(newItemData, {
+          scheduledTime: parsed.scheduledTime ? format(parsed.scheduledTime, 'HH:mm') : '09:00',
+          hasTime: parsed.hasTime,
+          recurrencePattern: parsed.recurrencePattern || { frequency: 'daily', interval: 1 },
+          streak: 0,
+          lastCompleted: null,
+          embeddedItems: [],
+        });
+      }
+
+      // Delete old and add new
+      deleteItem(item.id);
+      addItem(newItemData as any);
+    } else {
+      // Same type, just update
+      const updates: Partial<Item> = { content: parsed.content, tags: parsed.tags };
+
+      if (item.type === 'todo') {
+        Object.assign(updates, {
+          scheduledTime: parsed.scheduledTime,
+          hasTime: parsed.hasTime,
+          deadline: parsed.deadline,
+        });
+      } else if (item.type === 'event') {
+        Object.assign(updates, {
+          startTime: parsed.scheduledTime || (item as Event).startTime,
+          endTime: parsed.endTime || parsed.scheduledTime || (item as Event).endTime,
+          hasTime: parsed.hasTime,
+        });
+      } else if (item.type === 'routine') {
+        Object.assign(updates, {
+          scheduledTime: parsed.scheduledTime ? format(parsed.scheduledTime, 'HH:mm') : (item as Routine).scheduledTime,
+          hasTime: parsed.hasTime,
+          recurrencePattern: parsed.recurrencePattern || (item as Routine).recurrencePattern,
+        });
+      }
+
+      updateItem(item.id, updates);
+    }
+
+    // Clear time prompt and editing state
+    setTimePrompt(null);
+    setPromptedTime('');
+    setPromptedEndTime('');
+    setIsEditing(false);
+  };
+
+  const handleTimePromptCancel = () => {
+    setTimePrompt(null);
+    setPromptedTime('');
+    setPromptedEndTime('');
   };
 
   // Helper: Convert symbols back to prefixes for parsing
@@ -288,12 +403,95 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
   const indentPx = depth * 16;
 
   return (
-    <div className="group">
-      <div
-        style={{ marginLeft: `${indentPx}px` }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
+    <>
+      {/* Time Prompt Modal */}
+      {timePrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-background border border-border-subtle rounded-sm p-24 max-w-md w-full mx-16">
+            <h3 className="text-base font-serif mb-16">
+              {timePrompt.isEvent ? 'When does it start and end?' : 'What time?'}
+            </h3>
+            <p className="text-sm text-text-secondary mb-16 font-serif">{timePrompt.content}</p>
+
+            {timePrompt.isEvent ? (
+              // Event: show start and end times
+              <div className="space-y-12">
+                <div>
+                  <label className="block text-xs font-mono text-text-secondary mb-4">Start time</label>
+                  <input
+                    type="time"
+                    value={promptedTime}
+                    onChange={(e) => setPromptedTime(e.target.value)}
+                    className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleTimePromptSubmit();
+                      } else if (e.key === 'Escape') {
+                        handleTimePromptCancel();
+                      }
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-text-secondary mb-4">End time</label>
+                  <input
+                    type="time"
+                    value={promptedEndTime}
+                    onChange={(e) => setPromptedEndTime(e.target.value)}
+                    className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm mb-16"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleTimePromptSubmit();
+                      } else if (e.key === 'Escape') {
+                        handleTimePromptCancel();
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              // Task/Routine: show single time
+              <input
+                type="time"
+                value={promptedTime}
+                onChange={(e) => setPromptedTime(e.target.value)}
+                className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm mb-16"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleTimePromptSubmit();
+                  } else if (e.key === 'Escape') {
+                    handleTimePromptCancel();
+                  }
+                }}
+              />
+            )}
+
+            <div className="flex gap-8 justify-end mt-16">
+              <button
+                onClick={handleTimePromptCancel}
+                className="px-16 py-8 text-sm font-mono text-text-secondary hover:text-text-primary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTimePromptSubmit}
+                className="px-16 py-8 text-sm font-mono text-text-primary border border-border-subtle rounded-sm hover:bg-hover-bg"
+              >
+                {timePrompt.isEvent ? 'Add Times' : 'Add Time'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="group">
+        <div
+          style={{ marginLeft: `${indentPx}px` }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
         {/* Timestamp (only for top-level) */}
         {depth === 0 && (
           <div className="text-xs font-mono text-text-secondary mt-3 mb-0.5">
@@ -448,7 +646,8 @@ function ItemDisplay({ item, depth = 0, showTime = true }: ItemDisplayProps) {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
