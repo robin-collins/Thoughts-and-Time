@@ -377,12 +377,16 @@ function ThoughtsPane({
     const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
     const isScrollable = scrollHeight > clientHeight;
 
-    // For non-scrollable content, use wheel events directly
-    if (!isScrollable) {
+    // Detect if we're at boundaries
+    const atBottom = scrollTop + clientHeight >= scrollHeight - 5;
+    const atTop = scrollTop <= 5;
+
+    // For non-scrollable content OR at boundaries, use wheel delta accumulation
+    if (!isScrollable || atBottom || atTop) {
       wheelDeltaY.current += e.deltaY;
 
-      // Threshold to prevent accidental triggers
-      if (wheelDeltaY.current > 100) {
+      // Threshold to prevent accidental triggers - requires intentional over-scroll
+      if (wheelDeltaY.current > 150) {
         // Scroll down = next day
         wheelDeltaY.current = 0;
         isTransitioning.current = true;
@@ -397,7 +401,7 @@ function ThoughtsPane({
             }, 600);
           }, 50);
         }, 50);
-      } else if (wheelDeltaY.current < -100) {
+      } else if (wheelDeltaY.current < -150) {
         // Scroll up = previous day
         wheelDeltaY.current = 0;
         isTransitioning.current = true;
@@ -413,6 +417,9 @@ function ThoughtsPane({
           }, 50);
         }, 50);
       }
+    } else {
+      // Reset delta when scrolling normally (not at boundaries)
+      wheelDeltaY.current = 0;
     }
   };
 
@@ -423,51 +430,8 @@ function ThoughtsPane({
     const atBottom = scrollHeight - scrollTop - clientHeight < 50;
     setIsAtBottom(atBottom);
 
-    // Book mode: detect when user tries to scroll beyond boundaries
-    if (viewMode === 'book' && onNextDay && onPreviousDay && !isTransitioning.current) {
-      const scrollDirection = scrollTop > lastScrollTop.current ? 'down' : 'up';
-      lastScrollTop.current = scrollTop;
-
-      // Only detect boundary if content is scrollable (taller than container)
-      const isScrollable = scrollHeight > clientHeight;
-
-      // At bottom, trying to scroll down = next day
-      if (isScrollable && scrollTop + clientHeight >= scrollHeight - 1 && scrollDirection === 'down') {
-        isTransitioning.current = true;
-        setIsPageFlipping(true);
-        setTimeout(() => {
-          onNextDay();
-          // Wait for React to re-render with new content before resetting scroll
-          setTimeout(() => {
-            if (scrollRef.current) {
-              scrollRef.current.scrollTop = 0;
-            }
-            setTimeout(() => {
-              setIsPageFlipping(false);
-              isTransitioning.current = false;
-            }, 600);
-          }, 50);
-        }, 50);
-      }
-      // At top, trying to scroll up = previous day
-      else if (scrollTop <= 1 && scrollDirection === 'up') {
-        isTransitioning.current = true;
-        setIsPageFlipping(true);
-        setTimeout(() => {
-          onPreviousDay();
-          // Wait for React to re-render with new content before resetting scroll
-          setTimeout(() => {
-            if (scrollRef.current) {
-              scrollRef.current.scrollTop = 0;
-            }
-            setTimeout(() => {
-              setIsPageFlipping(false);
-              isTransitioning.current = false;
-            }, 600);
-          }, 50);
-        }, 50);
-      }
-    }
+    // Track scroll position for reference
+    lastScrollTop.current = scrollTop;
   };
 
   // Add wheel event listener for non-scrollable content
