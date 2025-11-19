@@ -33,6 +33,11 @@ This app enforces a strict scheduling philosophy: **every single task, event, an
 - [x] Two-pane layout (Thoughts & Time)
 - [x] Item display with symbols
 - [x] Serif typography (Crimson Text)
+- [x] Search functionality (filters both panes)
+- [x] Time format setting (12-hour vs 24-hour)
+- [x] Cascade delete (parent deletion removes all children)
+- [x] Type-safe item factories (removed 'as any' assertions)
+- [x] Shared formatting utilities (reduced code duplication)
 
 ---
 
@@ -73,31 +78,56 @@ This app enforces a strict scheduling philosophy: **every single task, event, an
 
 ---
 
-### 🟡 Medium Priority (Phase 2)
+#### 3. Time Format Setting
+**Status**: Completed ✅
 
-#### 3. Search Functionality
-**Status**: Not implemented
+**Completed**:
+- [x] Setting UI toggle for 12-hour vs 24-hour format
+- [x] Persistent preference storage
+- [x] Applied to item creation timestamps in ThoughtsPane
+- [x] Applied to all timeline displays in TimePane
+- [x] Applied to time prompt displays
+- [x] Shared utility function for consistent formatting
 
-**Requirements**:
-- [ ] Search icon in header (🔍)
-- [ ] Keyboard shortcut: Cmd/Ctrl + F
-- [ ] Scope: searches both panes simultaneously (Thoughts & Time)
-- [ ] Full-text search capability
-- [ ] Results show date, time, full item with symbol
-- [ ] Results grouped by pane (Thoughts results, then Time results)
-- [ ] Highlight matching text
-- [ ] Click result navigates to day and scrolls to item
-- [ ] ESC / [×] button to close search
-- [ ] Show "No results found" empty state
-
-**Files to create/modify**:
-- `src/components/Search.tsx` (new file)
-- `src/components/Header.tsx` (add search button)
-- `src/store/useStore.ts` (add search methods)
+**Files modified**:
+- `src/store/useSettingsStore.ts` (added timeFormat state)
+- `src/components/Settings.tsx` (added UI toggle)
+- `src/utils/formatting.ts` (formatTimeForDisplay function)
+- `src/components/ItemDisplay.tsx` (timestamp formatting)
+- `src/components/ThoughtsPane.tsx` (time prompt formatting)
+- `src/components/TimePane.tsx` (timeline formatting)
 
 ---
 
-#### 4. Event Auto-Split Logic
+### 🟡 Medium Priority (Phase 2)
+
+#### 4. Search Functionality
+**Status**: Completed ✅
+
+**Completed**:
+- [x] Search input in header
+- [x] Scope: searches both panes simultaneously (Thoughts & Time)
+- [x] Full-text search capability
+- [x] Recursive search (includes subtasks and sub-items)
+- [x] Filters both panes and daily review
+- [x] Hides empty days in book mode when searching
+- [x] Clear search with × button
+
+**Not implemented** (lower priority):
+- [ ] Keyboard shortcut: Cmd/Ctrl + F
+- [ ] Highlight matching text
+- [ ] Click result navigates to day and scrolls to item
+- [ ] Show "No results found" empty state
+
+**Files modified**:
+- `src/components/Header.tsx` (search input)
+- `src/components/ThoughtsPane.tsx` (search filtering)
+- `src/components/TimePane.tsx` (search filtering)
+- `src/components/DailyReview.tsx` (search filtering)
+
+---
+
+#### 5. Event Auto-Split Logic
 **Status**: Not implemented
 
 **Requirements**:
@@ -132,7 +162,7 @@ if (itemsDuring.length > 0) {
 
 ---
 
-#### 5. URL Link Previews for Notes
+#### 6. URL Link Previews for Notes
 **Status**: Not implemented
 
 **Requirements**:
@@ -164,7 +194,7 @@ domain: 13px, #6A6A6A
 
 ---
 
-#### 6. Note Embedding in Todos
+#### 7. Note Embedding in Todos
 **Status**: Not implemented
 
 **Requirements**:
@@ -193,7 +223,7 @@ domain: 13px, #6A6A6A
 
 ### 🟢 Lower Priority (Phase 3)
 
-#### 7. Completion Linking System
+#### 8. Completion Linking System
 **Status**: Partially implemented in store, not in UI - **Not a priority**
 
 **Requirements**:
@@ -225,7 +255,7 @@ Oct 14 Thoughts:
 
 ---
 
-#### 8. Database Backend (Supabase)
+#### 9. Database Backend (Supabase)
 **Status**: Not implemented (currently localStorage only)
 
 **Requirements**:
@@ -254,7 +284,7 @@ Oct 14 Thoughts:
 
 ---
 
-#### 9. Mobile Responsive Optimizations
+#### 10. Mobile Responsive Optimizations
 **Status**: Partially responsive, needs improvements
 
 **Requirements**:
@@ -274,7 +304,7 @@ Oct 14 Thoughts:
 
 ---
 
-#### 10. Notifications System
+#### 11. Notifications System
 **Status**: Not implemented
 
 **Requirements**:
@@ -295,7 +325,7 @@ Oct 14 Thoughts:
 
 ---
 
-#### 11. Performance Optimizations
+#### 12. Performance Optimizations
 **Status**: Not implemented
 
 **Requirements**:
@@ -322,7 +352,7 @@ Oct 14 Thoughts:
 
 ---
 
-#### 12. Accessibility Improvements
+#### 13. Accessibility Improvements
 **Status**: Basic accessibility, needs WCAG 2.1 compliance
 
 **Requirements**:
