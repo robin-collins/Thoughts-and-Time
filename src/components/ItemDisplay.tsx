@@ -494,16 +494,18 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
 
         {/* Item Content */}
         <div className={`flex items-start gap-3 ${isCompleted ? 'opacity-40' : ''}`}>
-          {/* Symbol */}
-          <button
-            onClick={handleToggleComplete}
-            className={`text-base leading-book flex-shrink-0 ${
-              item.type === 'todo' ? 'cursor-pointer hover:opacity-70' : 'cursor-default'
-            }`}
-            disabled={item.type !== 'todo'}
-          >
-            {getSymbol()}
-          </button>
+          {/* Symbol - hide when editing */}
+          {!isEditing && (
+            <button
+              onClick={handleToggleComplete}
+              className={`text-base leading-book flex-shrink-0 ${
+                item.type === 'todo' ? 'cursor-pointer hover:opacity-70' : 'cursor-default'
+              }`}
+              disabled={item.type !== 'todo'}
+            >
+              {getSymbol()}
+            </button>
+          )}
 
           {/* Content */}
           <div className="flex-1">
