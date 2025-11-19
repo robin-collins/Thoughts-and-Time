@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { format, differenceInDays } from 'date-fns';
 import { useStore } from '../store/useStore';
 import { Todo } from '../types';
+import { parseInput } from '../utils/parser';
 
 interface DailyReviewItem {
   item: Todo;
@@ -12,8 +13,9 @@ function DailyReview() {
   const items = useStore((state) => state.items);
   const updateItem = useStore((state) => state.updateItem);
   const deleteItem = useStore((state) => state.deleteItem);
+  const toggleTodoComplete = useStore((state) => state.toggleTodoComplete);
   const [showRescheduler, setShowRescheduler] = useState<string | null>(null);
-  const [selectedTime, setSelectedTime] = useState('');
+  const [rescheduleInput, setRescheduleInput] = useState('');
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const now = new Date();
@@ -38,35 +40,40 @@ function DailyReview() {
 
       return { item: todo, waitingDays };
     })
-    .sort((a, b) => b.waitingDays - a.waitingDays); // Latest items at top (highest waiting days first)
+    .sort((a, b) => b.waitingDays - a.waitingDays); // Oldest first (highest waiting days first)
 
   const handleReschedule = (itemId: string) => {
     setShowRescheduler(itemId);
   };
 
   const confirmReschedule = (itemId: string) => {
-    if (!selectedTime) return;
+    if (!rescheduleInput.trim()) return;
 
-    // Parse time (HH:mm format)
-    const [hours, minutes] = selectedTime.split(':').map(Number);
-    const scheduledDate = new Date();
-    scheduledDate.setHours(hours, minutes, 0, 0);
+    // Parse the input using the parser
+    const parsed = parseInput(rescheduleInput);
 
-    updateItem(itemId, {
-      scheduledTime: scheduledDate,
-    });
+    if (!parsed) {
+      alert('Could not parse date/time. Try formats like "tomorrow 2pm", "friday at 3:30pm", "next monday 9am"');
+      return;
+    }
+
+    // Update the item with the new scheduled time
+    if (parsed.scheduledTime) {
+      updateItem(itemId, {
+        scheduledTime: parsed.scheduledTime,
+        hasTime: true,
+      });
+    } else {
+      alert('Please specify a date/time for rescheduling');
+      return;
+    }
 
     setShowRescheduler(null);
-    setSelectedTime('');
+    setRescheduleInput('');
   };
 
   const handleComplete = (itemId: string) => {
-    updateItem(itemId, {
-      completedAt: now,
-    });
-
-    // TODO: Create completion entry in today's Thoughts
-    // TODO: Create CompletionLink between them
+    toggleTodoComplete(itemId);
   };
 
   const handleCancel = (itemId: string) => {
@@ -122,24 +129,33 @@ function DailyReview() {
             {showRescheduler === item.id ? (
               <div className="flex items-center gap-4 pl-16">
                 <input
-                  type="time"
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="bg-background border border-border-subtle px-6 py-3 font-mono text-sm outline-none focus:border-text-secondary"
+                  type="text"
+                  value={rescheduleInput}
+                  onChange={(e) => setRescheduleInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      confirmReschedule(item.id);
+                    } else if (e.key === 'Escape') {
+                      setShowRescheduler(null);
+                      setRescheduleInput('');
+                    }
+                  }}
+                  placeholder="e.g., tomorrow 2pm, friday 9am"
+                  className="bg-background border border-border-subtle px-8 py-4 font-mono text-sm outline-none focus:border-text-secondary min-w-[200px]"
                   autoFocus
                 />
                 <button
                   onClick={() => confirmReschedule(item.id)}
-                  className="px-6 py-3 text-xs font-mono hover:opacity-70"
+                  className="px-8 py-4 text-xs font-mono hover:opacity-70"
                 >
                   Confirm
                 </button>
                 <button
                   onClick={() => {
                     setShowRescheduler(null);
-                    setSelectedTime('');
+                    setRescheduleInput('');
                   }}
-                  className="px-6 py-3 text-xs font-mono text-text-secondary hover:opacity-70"
+                  className="px-8 py-4 text-xs font-mono text-text-secondary hover:opacity-70"
                 >
                   Cancel
                 </button>

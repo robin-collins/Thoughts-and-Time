@@ -944,8 +944,8 @@ function TimePane({
         }`}
         style={viewMode === 'book' ? { height: 'calc(100vh - 60px - 90px)' } : undefined}
       >
-        {/* Daily Review - appears at top (infinite mode only) */}
-        {viewMode === 'infinite' && <DailyReview />}
+        {/* Daily Review - appears at top in infinite mode, or in book mode when viewing today */}
+        {(viewMode === 'infinite' || (viewMode === 'book' && currentDate === today)) && <DailyReview />}
 
         {(viewMode === 'book' && currentDate ? [currentDate] : dates).map((date) => {
           const entries = entriesByDate.get(date) || [];
