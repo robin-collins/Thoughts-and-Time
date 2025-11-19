@@ -43,6 +43,10 @@ function DailyReview() {
     .sort((a, b) => b.waitingDays - a.waitingDays); // Oldest first (highest waiting days first)
 
   const handleReschedule = (itemId: string) => {
+    const item = items.find((i) => i.id === itemId);
+    if (item) {
+      setRescheduleInput(item.content);
+    }
     setShowRescheduler(itemId);
   };
 
