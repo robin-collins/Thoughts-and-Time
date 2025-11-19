@@ -4,7 +4,6 @@ import { useStore } from '../store/useStore';
 import DailyReview from './DailyReview';
 import { Item, Todo, Event as EventType, Note, Routine } from '../types';
 import { parseInput } from '../utils/parser';
-import { useDroppableZone } from '../hooks/useDragAndDrop';
 
 type TimelineEntry = {
   time: Date;
@@ -19,26 +18,6 @@ interface TimePaneProps {
   currentDate?: string;
   onNextDay?: () => void;
   onPreviousDay?: () => void;
-}
-
-// Drop Zone Component
-function DropZone({ date, time }: { date: string; time?: string }) {
-  const dropId = `drop-${date}-${time || 'anytime'}`;
-  const { setNodeRef, isOver, style } = useDroppableZone(dropId, date, time);
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="py-2 px-4 rounded transition-all"
-    >
-      {isOver && (
-        <div className="text-xs font-mono text-text-secondary text-center">
-          Drop here to schedule
-        </div>
-      )}
-    </div>
-  );
 }
 
 function TimePane({
@@ -1009,17 +988,11 @@ function TimePane({
 
               {/* Items for this date */}
               {times.length === 0 ? (
-                <>
-                  {/* Drop zone for empty day */}
-                  <DropZone date={date} />
-                  <div className="text-center text-text-secondary text-sm py-4">
-                    <p>No scheduled items</p>
-                  </div>
-                </>
+                <div className="text-center text-text-secondary text-sm py-4">
+                  <p>No scheduled items</p>
+                </div>
               ) : (
                 <div className="space-y-6">
-                  {/* Drop zone at top of day */}
-                  <DropZone date={date} />
 
                   {times.map((time) => (
                     <div key={time}>
@@ -1033,9 +1006,6 @@ function TimePane({
                           </div>
                         ))}
                       </div>
-
-                      {/* Drop zone after each time block */}
-                      <DropZone date={date} time={time} />
                     </div>
                   ))}
                 </div>

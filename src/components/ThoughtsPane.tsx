@@ -578,7 +578,6 @@ function ThoughtsPane({
                       key={item.id}
                       item={item}
                       sourcePane="thoughts"
-                      enableDrag={true}
                     />
                   ))}
                 </div>
