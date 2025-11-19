@@ -8,8 +8,10 @@ interface SettingsProps {
 function Settings({ isOpen, onClose }: SettingsProps) {
   const theme = useSettingsStore((state) => state.theme);
   const viewMode = useSettingsStore((state) => state.viewMode);
+  const timeFormat = useSettingsStore((state) => state.timeFormat);
   const setTheme = useSettingsStore((state) => state.setTheme);
   const setViewMode = useSettingsStore((state) => state.setViewMode);
+  const setTimeFormat = useSettingsStore((state) => state.setTimeFormat);
 
   if (!isOpen) return null;
 
@@ -89,6 +91,33 @@ function Settings({ isOpen, onClose }: SettingsProps) {
                 }`}
               >
                 Book Style
+              </button>
+            </div>
+          </div>
+
+          {/* Time Format Setting */}
+          <div>
+            <label className="block text-sm font-serif mb-8">Time Format</label>
+            <div className="flex gap-8">
+              <button
+                onClick={() => setTimeFormat('12h')}
+                className={`flex-1 px-16 py-8 text-sm font-mono border rounded-sm transition-colors ${
+                  timeFormat === '12h'
+                    ? 'bg-text-primary text-background border-text-primary'
+                    : 'bg-transparent text-text-secondary border-border-subtle hover:border-text-secondary'
+                }`}
+              >
+                12-hour
+              </button>
+              <button
+                onClick={() => setTimeFormat('24h')}
+                className={`flex-1 px-16 py-8 text-sm font-mono border rounded-sm transition-colors ${
+                  timeFormat === '24h'
+                    ? 'bg-text-primary text-background border-text-primary'
+                    : 'bg-transparent text-text-secondary border-border-subtle hover:border-text-secondary'
+                }`}
+              >
+                24-hour
               </button>
             </div>
           </div>

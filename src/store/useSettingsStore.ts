@@ -3,14 +3,17 @@ import { persist } from 'zustand/middleware';
 
 type Theme = 'dark' | 'light';
 type ViewMode = 'infinite' | 'book';
+type TimeFormat = '12h' | '24h';
 
 interface SettingsState {
   theme: Theme;
   viewMode: ViewMode;
+  timeFormat: TimeFormat;
 
   // Actions
   setTheme: (theme: Theme) => void;
   setViewMode: (mode: ViewMode) => void;
+  setTimeFormat: (format: TimeFormat) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -18,6 +21,7 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       theme: 'dark',
       viewMode: 'infinite',
+      timeFormat: '12h',
 
       setTheme: (theme) => {
         set({ theme });
@@ -26,6 +30,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
 
       setViewMode: (mode) => set({ viewMode: mode }),
+      setTimeFormat: (format) => set({ timeFormat: format }),
     }),
     {
       name: 'thoughts-time-settings',

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import DailyReview from './DailyReview';
 import { Item, Todo, Event as EventType, Note, Routine } from '../types';
 import { parseInput } from '../utils/parser';
@@ -30,10 +31,19 @@ function TimePane({
   onPreviousDay,
 }: TimePaneProps) {
   const items = useStore((state) => state.items);
+  const timeFormat = useSettingsStore((state) => state.timeFormat);
   const toggleTodoComplete = useStore((state) => state.toggleTodoComplete);
   const updateItem = useStore((state) => state.updateItem);
   const deleteItem = useStore((state) => state.deleteItem);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Helper function to format Date object to time string based on setting
+  const formatTime = (date: Date): string => {
+    if (timeFormat === '24h') {
+      return format(date, 'HH:mm');
+    }
+    return format(date, 'h:mm a');
+  };
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
@@ -113,7 +123,7 @@ function TimePane({
         }
         entriesByDate.get(dateKey)!.push({
           time: new Date(todo.scheduledTime),
-          timeKey: format(new Date(todo.scheduledTime), 'h:mm a'),
+          timeKey: formatTime(new Date(todo.scheduledTime)),
           type: 'todo',
           item,
         });
@@ -133,14 +143,14 @@ function TimePane({
         // Split event: add start and end markers
         entriesByDate.get(dateKey)!.push({
           time: startTime,
-          timeKey: format(startTime, 'h:mm a'),
+          timeKey: formatTime(startTime),
           type: 'event-start',
           item,
         });
 
         entriesByDate.get(dateKey)!.push({
           time: endTime,
-          timeKey: format(endTime, 'h:mm a'),
+          timeKey: formatTime(endTime),
           type: 'event-end',
           item,
         });
@@ -148,7 +158,7 @@ function TimePane({
         // Single event: no split
         entriesByDate.get(dateKey)!.push({
           time: startTime,
-          timeKey: format(startTime, 'h:mm a'),
+          timeKey: formatTime(startTime),
           type: 'event-single',
           item,
         });
@@ -364,10 +374,10 @@ function TimePane({
     let updatedContent: string;
     if (timePrompt.isEvent) {
       // Events: "from X to Y"
-      updatedContent = timePrompt.content + ' from ' + formatTimeForDisplay(promptedTime) + ' to ' + formatTimeForDisplay(promptedEndTime);
+      updatedContent = timePrompt.content + ' from ' + formatTimeForDisplay(promptedTime, timeFormat) + ' to ' + formatTimeForDisplay(promptedEndTime, timeFormat);
     } else {
       // Tasks/Routines: "at X"
-      updatedContent = timePrompt.content + ' at ' + formatTimeForDisplay(promptedTime);
+      updatedContent = timePrompt.content + ' at ' + formatTimeForDisplay(promptedTime, timeFormat);
     }
 
     // Convert symbols back to prefixes before parsing
@@ -595,8 +605,8 @@ function TimePane({
       );
     } else if (entry.type === 'event-single') {
       const event = item as EventType;
-      const startTime = format(new Date(event.startTime), 'h:mm a');
-      const endTime = format(new Date(event.endTime), 'h:mm a');
+      const startTime = formatTime(new Date(event.startTime));
+      const endTime = formatTime(new Date(event.endTime));
       const isEditing = editingItem === item.id;
       const isHovered = hoveredItem === item.id;
 
@@ -664,8 +674,8 @@ function TimePane({
       );
     } else if (entry.type === 'event-start') {
       const event = item as EventType;
-      const startTime = format(new Date(event.startTime), 'h:mm a');
-      const endTime = format(new Date(event.endTime), 'h:mm a');
+      const startTime = formatTime(new Date(event.startTime));
+      const endTime = formatTime(new Date(event.endTime));
       const isEditing = editingItem === item.id;
       const isHovered = hoveredItem === item.id;
 

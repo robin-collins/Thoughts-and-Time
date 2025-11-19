@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 import { Item, Todo, Routine, Note, Event } from '../types';
 import { useStore } from '../store/useStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { parseInput } from '../utils/parser';
 import { createItem } from '../utils/itemFactory';
 import { symbolsToPrefix, formatTimeForDisplay, prefixToSymbol, symbolToPrefix as symbolToPrefixMap } from '../utils/formatting';
@@ -19,6 +20,7 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
   const deleteItem = useStore((state) => state.deleteItem);
   const addItemDirect = useStore((state) => state.addItemDirect);
   const items = useStore((state) => state.items);
+  const timeFormat = useSettingsStore((state) => state.timeFormat);
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
@@ -150,10 +152,10 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
     let updatedContent: string;
     if (timePrompt.isEvent) {
       // Events: "from X to Y"
-      updatedContent = timePrompt.content + ' from ' + formatTimeForDisplay(promptedTime) + ' to ' + formatTimeForDisplay(promptedEndTime);
+      updatedContent = timePrompt.content + ' from ' + formatTimeForDisplay(promptedTime, timeFormat) + ' to ' + formatTimeForDisplay(promptedEndTime, timeFormat);
     } else {
       // Tasks/Routines: "at X"
-      updatedContent = timePrompt.content + ' at ' + formatTimeForDisplay(promptedTime);
+      updatedContent = timePrompt.content + ' at ' + formatTimeForDisplay(promptedTime, timeFormat);
     }
 
     // Convert symbols back to prefixes before parsing

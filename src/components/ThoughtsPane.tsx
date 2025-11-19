@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import ItemDisplay from './ItemDisplay';
 import { Item, Todo, Note } from '../types';
 import { parseInput } from '../utils/parser';
@@ -24,6 +25,7 @@ function ThoughtsPane({
   const [input, setInput] = useState('');
   const addItem = useStore((state) => state.addItem);
   const items = useStore((state) => state.items);
+  const timeFormat = useSettingsStore((state) => state.timeFormat);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -311,10 +313,10 @@ function ThoughtsPane({
 
     if (timePrompt.isEvent) {
       // Events: "from X to Y"
-      updatedLine = lines[timePrompt.index].trimStart() + ' from ' + formatTimeForDisplay(promptedTime) + ' to ' + formatTimeForDisplay(promptedEndTime);
+      updatedLine = lines[timePrompt.index].trimStart() + ' from ' + formatTimeForDisplay(promptedTime, timeFormat) + ' to ' + formatTimeForDisplay(promptedEndTime, timeFormat);
     } else {
       // Tasks: "at X"
-      updatedLine = lines[timePrompt.index].trimStart() + ' at ' + formatTimeForDisplay(promptedTime);
+      updatedLine = lines[timePrompt.index].trimStart() + ' at ' + formatTimeForDisplay(promptedTime, timeFormat);
     }
 
     // Restore indentation

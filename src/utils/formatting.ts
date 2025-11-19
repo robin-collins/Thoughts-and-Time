@@ -16,11 +16,17 @@ export function symbolsToPrefix(text: string): string {
 }
 
 /**
- * Convert 24-hour time string (HH:mm) to 12-hour format with am/pm
- * Example: "14:30" => "2:30pm"
+ * Convert 24-hour time string (HH:mm) to display format
+ * Example: "14:30" => "2:30pm" (12h) or "14:30" (24h)
  */
-export function formatTimeForDisplay(time24: string): string {
+export function formatTimeForDisplay(time24: string, format: '12h' | '24h' = '12h'): string {
   const [hours, minutes] = time24.split(':').map(Number);
+
+  if (format === '24h') {
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+
+  // 12-hour format
   const period = hours >= 12 ? 'pm' : 'am';
   const hours12 = hours % 12 || 12;
   return `${hours12}:${minutes.toString().padStart(2, '0')}${period}`;
