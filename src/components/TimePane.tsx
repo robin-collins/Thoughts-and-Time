@@ -944,8 +944,13 @@ function TimePane({
         }`}
         style={viewMode === 'book' ? { height: 'calc(100vh - 60px - 90px)' } : undefined}
       >
-        {/* Daily Review - appears at top in infinite mode, or in book mode when viewing today */}
-        {(viewMode === 'infinite' || (viewMode === 'book' && currentDate === today)) && <DailyReview />}
+        {/* Daily Review - appears at top in infinite mode ONLY */}
+        {viewMode === 'infinite' && (
+          <div className="mb-16">
+            <DailyReview />
+            <div className="mt-8 border-t border-border-subtle" />
+          </div>
+        )}
 
         {(viewMode === 'book' && currentDate ? [currentDate] : dates).map((date) => {
           const entries = entriesByDate.get(date) || [];
@@ -985,6 +990,13 @@ function TimePane({
                   {isToday && ' (Today)'}
                 </h3>
               </div>
+
+              {/* Daily Review - appears under current day title in book mode */}
+              {viewMode === 'book' && isToday && (
+                <div className="mb-8 border border-border-subtle rounded-sm p-16 bg-hover-bg">
+                  <DailyReview />
+                </div>
+              )}
 
               {/* Items for this date */}
               {times.length === 0 ? (

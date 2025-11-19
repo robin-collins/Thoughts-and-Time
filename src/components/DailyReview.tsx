@@ -49,8 +49,8 @@ function DailyReview() {
   const confirmReschedule = (itemId: string) => {
     if (!rescheduleInput.trim()) return;
 
-    // Parse the input using the parser
-    const parsed = parseInput(rescheduleInput);
+    // Parse the input using the parser - prepend "t " so parser treats it as a todo
+    const parsed = parseInput('t ' + rescheduleInput);
 
     if (!parsed) {
       alert('Could not parse date/time. Try formats like "tomorrow 2pm", "friday at 3:30pm", "next monday 9am"');
@@ -61,7 +61,7 @@ function DailyReview() {
     if (parsed.scheduledTime) {
       updateItem(itemId, {
         scheduledTime: parsed.scheduledTime,
-        hasTime: true,
+        hasTime: parsed.hasTime,
       });
     } else {
       alert('Please specify a date/time for rescheduling');
@@ -89,7 +89,7 @@ function DailyReview() {
   const allHandled = false; // TODO: Track which items have been handled
 
   return (
-    <div className="mb-16">
+    <div>
       {/* Daily Review Header */}
       <div className="mb-6">
         <div className="flex items-center gap-4">
@@ -188,9 +188,6 @@ function DailyReview() {
           </div>
         ))}
       </div>
-
-      {/* Separator */}
-      <div className="mt-8 border-t border-border-subtle" />
     </div>
   );
 }
