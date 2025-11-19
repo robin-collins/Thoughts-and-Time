@@ -170,20 +170,28 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
     setIsEditing(false);
   };
 
+  // Helper: Convert 24-hour time string (HH:mm) to 12-hour format with am/pm
+  const formatTimeForDisplay = (time24: string): string => {
+    const [hours, minutes] = time24.split(':').map(Number);
+    const period = hours >= 12 ? 'pm' : 'am';
+    const hours12 = hours % 12 || 12;
+    return `${hours12}:${minutes.toString().padStart(2, '0')}${period}`;
+  };
+
   const handleTimePromptSubmit = () => {
     if (!timePrompt || !promptedTime) return;
 
     // For events, also require end time
     if (timePrompt.isEvent && !promptedEndTime) return;
 
-    // Update content with time
+    // Update content with time (formatted for readability)
     let updatedContent: string;
     if (timePrompt.isEvent) {
       // Events: "from X to Y"
-      updatedContent = timePrompt.content + ' from ' + promptedTime + ' to ' + promptedEndTime;
+      updatedContent = timePrompt.content + ' from ' + formatTimeForDisplay(promptedTime) + ' to ' + formatTimeForDisplay(promptedEndTime);
     } else {
       // Tasks/Routines: "at X"
-      updatedContent = timePrompt.content + ' at ' + promptedTime;
+      updatedContent = timePrompt.content + ' at ' + formatTimeForDisplay(promptedTime);
     }
 
     // Convert symbols back to prefixes before parsing
