@@ -944,19 +944,11 @@ function TimePane({
         }`}
         style={viewMode === 'book' ? { height: 'calc(100vh - 60px - 90px)' } : undefined}
       >
-        {/* Daily Review - appears at top in infinite mode ONLY */}
-        {viewMode === 'infinite' && (
-          <div className="mb-16">
-            <DailyReview />
-            <div className="mt-8 border-t border-border-subtle" />
-          </div>
-        )}
-
         {(viewMode === 'book' && currentDate ? [currentDate] : dates).map((date) => {
           const entries = entriesByDate.get(date) || [];
           const isToday = date === today;
 
-          if (viewMode === 'infinite' && entries.length === 0) {
+          if (viewMode === 'infinite' && entries.length === 0 && !isToday) {
             return null;
           }
 
@@ -991,10 +983,11 @@ function TimePane({
                 </h3>
               </div>
 
-              {/* Daily Review - appears under current day title in book mode */}
-              {viewMode === 'book' && isToday && (
-                <div className="mb-8 border border-border-subtle rounded-sm p-16 bg-hover-bg">
+              {/* Daily Review - appears under current day title in both modes */}
+              {isToday && (
+                <div className={`mb-8 ${viewMode === 'book' ? 'border border-border-subtle rounded-sm p-16 bg-hover-bg' : ''}`}>
                   <DailyReview />
+                  {viewMode === 'infinite' && <div className="mt-8 border-t border-border-subtle" />}
                 </div>
               )}
 
