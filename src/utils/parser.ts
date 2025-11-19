@@ -222,15 +222,6 @@ export function removePrefix(input: string): string {
   return input;
 }
 
-/**
- * Extract tags from content
- * Pattern: # followed by alphanumeric characters
- */
-export function extractTags(content: string): string[] {
-  const tagPattern = /#(\w+)/g;
-  const matches = content.matchAll(tagPattern);
-  return Array.from(matches, (m) => m[1]);
-}
 
 /**
  * Extract embedded note references from content
@@ -377,46 +368,16 @@ export function parseDateTime(content: string): { date: Date | null; hasTime: bo
 }
 
 /**
- * Detect deadline keywords (by, due, deadline)
- */
-export function parseDeadline(content: string): Date | null {
-  const lowerContent = content.toLowerCase();
-
-  // Check for deadline keywords
-  if (!lowerContent.includes('by ') && !lowerContent.includes('due ') && !lowerContent.includes('deadline ')) {
-    return null;
-  }
-
-  // Use enhanced Chrono to parse the date after the keyword
-  const byMatch = content.match(/by\s+(.+?)(?:\.|$|#)/i);
-  const dueMatch = content.match(/due\s+(.+?)(?:\.|$|#)/i);
-  const deadlineMatch = content.match(/deadline\s+(.+?)(?:\.|$|#)/i);
-
-  const matchText = byMatch?.[1] || dueMatch?.[1] || deadlineMatch?.[1];
-
-  if (matchText) {
-    const results = customChrono.parse(matchText);
-    if (results.length > 0) {
-      return results[0].start.date();
-    }
-  }
-
-  return null;
-}
-
-/**
  * Main parsing function
  */
 export function parseInput(input: string): ParsedInput {
   const type = detectItemType(input);
   const content = removePrefix(input);
-  const tags = extractTags(content);
   const embeddedNotes = extractEmbeddedNotes(content);
 
   let scheduledTime: Date | null = null;
   let endTime: Date | null = null;
   let hasTime = false;
-  let deadline: Date | null = null;
   let recurrencePattern: RecurrencePattern | null = null;
 
   // Parse based on type
@@ -425,16 +386,6 @@ export function parseInput(input: string): ParsedInput {
     scheduledTime = parsed.date;
     endTime = parsed.endDate || null;
     hasTime = parsed.hasTime;
-
-    // For todos, also check for deadline
-    if (type === 'todo') {
-      deadline = parseDeadline(content);
-      // If deadline but no scheduled time, deadline takes precedence
-      if (deadline && !scheduledTime) {
-        scheduledTime = deadline;
-        hasTime = false;
-      }
-    }
   }
 
   if (type === 'routine') {
@@ -468,11 +419,9 @@ export function parseInput(input: string): ParsedInput {
   return {
     type,
     content,
-    tags,
     scheduledTime,
     endTime,
     hasTime,
-    deadline,
     recurrencePattern,
     embeddedNotes,
     needsTimePrompt,

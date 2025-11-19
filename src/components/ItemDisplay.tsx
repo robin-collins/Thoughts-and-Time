@@ -94,7 +94,6 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
       // Create new item with parsed data
       const newItemData = {
         content: parsed.content,
-        tags: parsed.tags,
         type: parsed.type,
         createdAt: item.createdAt, // Preserve original creation time
         createdDate: item.createdDate,
@@ -105,7 +104,6 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
         Object.assign(newItemData, {
           scheduledTime: parsed.scheduledTime,
           hasTime: parsed.hasTime,
-          deadline: parsed.deadline,
           completedAt: null,
           subtasks: [],
           embeddedItems: [],
@@ -137,13 +135,12 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
       addItem(newItemData as any);
     } else {
       // Same type, just update
-      const updates: Partial<Item> = { content: parsed.content, tags: parsed.tags };
+      const updates: Partial<Item> = { content: parsed.content };
 
       if (item.type === 'todo') {
         Object.assign(updates, {
           scheduledTime: parsed.scheduledTime !== null ? parsed.scheduledTime : (item as Todo).scheduledTime,
           hasTime: parsed.hasTime,
-          deadline: parsed.deadline !== null ? parsed.deadline : (item as Todo).deadline,
         });
       } else if (item.type === 'event') {
         Object.assign(updates, {
@@ -205,7 +202,6 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
       // Create new item with parsed data
       const newItemData = {
         content: parsed.content,
-        tags: parsed.tags,
         type: parsed.type,
         createdAt: item.createdAt, // Preserve original creation time
         createdDate: item.createdDate,
@@ -216,7 +212,6 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
         Object.assign(newItemData, {
           scheduledTime: parsed.scheduledTime,
           hasTime: parsed.hasTime,
-          deadline: parsed.deadline,
           completedAt: null,
           subtasks: [],
           embeddedItems: [],
@@ -244,13 +239,12 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
       addItem(newItemData as any);
     } else {
       // Same type, just update
-      const updates: Partial<Item> = { content: parsed.content, tags: parsed.tags };
+      const updates: Partial<Item> = { content: parsed.content };
 
       if (item.type === 'todo') {
         Object.assign(updates, {
           scheduledTime: parsed.scheduledTime !== null ? parsed.scheduledTime : (item as Todo).scheduledTime,
           hasTime: parsed.hasTime,
-          deadline: parsed.deadline !== null ? parsed.deadline : (item as Todo).deadline,
         });
       } else if (item.type === 'event') {
         Object.assign(updates, {
@@ -567,26 +561,9 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
               </div>
             )}
 
-            {/* Tags */}
-            {item.tags.length > 0 && (
-              <div className="mt-1 text-xs text-text-secondary">
-                {item.tags.map((tag) => (
-                  <span key={tag} className="mr-6">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
-
             {/* Additional metadata for todos */}
             {item.type === 'todo' && (
-              <>
-                {(item as Todo).deadline && (
-                  <div className="mt-1 text-xs font-mono text-text-secondary">
-                    Due: {format(new Date((item as Todo).deadline!), 'MMM d, h:mm a')}
-                  </div>
-                )}
-              </>
+              <></>
             )}
 
             {/* Additional metadata for routines */}

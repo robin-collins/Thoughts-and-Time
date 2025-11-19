@@ -7,7 +7,6 @@ export interface BaseItem {
   userId: string;
   type: ItemType;
   content: string;
-  tags: string[];
   createdAt: Date;
   createdDate: string; // YYYY-MM-DD
   updatedAt: Date;
@@ -18,7 +17,6 @@ export interface BaseItem {
 export interface Todo extends BaseItem {
   type: 'todo';
   scheduledTime: Date | null; // null = unscheduled
-  deadline: Date | null;
   hasTime: boolean; // whether scheduledTime has a specific time or just date
   parentId: string | null; // for subtasks
   parentType: 'todo' | 'note' | null;
@@ -87,11 +85,9 @@ export type Item = Todo | Event | Routine | Note;
 export interface ParsedInput {
   type: ItemType;
   content: string;
-  tags: string[];
   scheduledTime: Date | null;
   endTime?: Date | null;
   hasTime: boolean;
-  deadline: Date | null;
   recurrencePattern: RecurrencePattern | null;
   embeddedNotes: string[]; // IDs of notes to embed
   needsTimePrompt: boolean; // True if date exists but no specific time
