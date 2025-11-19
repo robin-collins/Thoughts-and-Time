@@ -104,30 +104,9 @@ function DailyReview() {
       <div className="space-y-6 pl-16">
         {reviewItems.map(({ item, waitingDays }) => (
           <div key={item.id} className="group">
-            <div className="flex items-start gap-3 mb-2">
-              <span className="text-base leading-book flex-shrink-0 text-text-secondary">•</span>
-              <div className="flex-1">
-                <p className="text-base font-serif leading-book">
-                  {item.content}
-                  <span className="text-xs font-mono text-text-secondary ml-6">
-                    (waiting {waitingDays} {waitingDays === 1 ? 'day' : 'days'})
-                  </span>
-                </p>
-                {item.tags.length > 0 && (
-                  <div className="mt-1 text-xs text-text-secondary">
-                    {item.tags.map((tag) => (
-                      <span key={tag} className="mr-6">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Action Buttons */}
             {showRescheduler === item.id ? (
-              <div className="flex items-center gap-4 pl-16">
+              <div className="flex items-center gap-4">
+                <span className="text-base leading-book flex-shrink-0 text-text-secondary">•</span>
                 <input
                   type="text"
                   value={rescheduleInput}
@@ -161,28 +140,48 @@ function DailyReview() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-6 pl-16">
-                <button
-                  onClick={() => handleReschedule(item.id)}
-                  className="w-18 h-18 flex items-center justify-center hover:opacity-70 active:opacity-50"
-                  title="Reschedule"
-                >
-                  <span className="text-sm">↷</span>
-                </button>
-                <button
-                  onClick={() => handleComplete(item.id)}
-                  className="w-18 h-18 flex items-center justify-center hover:opacity-70 active:opacity-50"
-                  title="Complete"
-                >
-                  <span className="text-sm">✓</span>
-                </button>
-                <button
-                  onClick={() => handleCancel(item.id)}
-                  className="w-18 h-18 flex items-center justify-center hover:opacity-70 active:opacity-50 text-text-secondary"
-                  title="Cancel"
-                >
-                  <span className="text-sm">×</span>
-                </button>
+              <div className="flex items-start gap-3">
+                <span className="text-base leading-book flex-shrink-0 text-text-secondary">•</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-serif leading-book">
+                    {item.content}
+                    <span className="text-xs font-mono text-text-secondary ml-6">
+                      ({waitingDays} {waitingDays === 1 ? 'day' : 'days'} old)
+                    </span>
+                  </p>
+                  {item.tags.length > 0 && (
+                    <div className="mt-1 text-xs text-text-secondary">
+                      {item.tags.map((tag) => (
+                        <span key={tag} className="mr-6">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-6 flex-shrink-0">
+                  <button
+                    onClick={() => handleReschedule(item.id)}
+                    className="w-18 h-18 flex items-center justify-center hover:opacity-70 active:opacity-50"
+                    title="Reschedule"
+                  >
+                    <span className="text-sm">↷</span>
+                  </button>
+                  <button
+                    onClick={() => handleComplete(item.id)}
+                    className="w-18 h-18 flex items-center justify-center hover:opacity-70 active:opacity-50"
+                    title="Complete"
+                  >
+                    <span className="text-sm">✓</span>
+                  </button>
+                  <button
+                    onClick={() => handleCancel(item.id)}
+                    className="w-18 h-18 flex items-center justify-center hover:opacity-70 active:opacity-50 text-text-secondary"
+                    title="Cancel"
+                  >
+                    <span className="text-sm">×</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
