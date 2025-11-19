@@ -141,9 +141,9 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
 
       if (item.type === 'todo') {
         Object.assign(updates, {
-          scheduledTime: parsed.scheduledTime,
+          scheduledTime: parsed.scheduledTime !== null ? parsed.scheduledTime : (item as Todo).scheduledTime,
           hasTime: parsed.hasTime,
-          deadline: parsed.deadline,
+          deadline: parsed.deadline !== null ? parsed.deadline : (item as Todo).deadline,
         });
       } else if (item.type === 'event') {
         Object.assign(updates, {
@@ -248,9 +248,9 @@ function ItemDisplay({ item, depth = 0, showTime = true, sourcePane = 'thoughts'
 
       if (item.type === 'todo') {
         Object.assign(updates, {
-          scheduledTime: parsed.scheduledTime,
+          scheduledTime: parsed.scheduledTime !== null ? parsed.scheduledTime : (item as Todo).scheduledTime,
           hasTime: parsed.hasTime,
-          deadline: parsed.deadline,
+          deadline: parsed.deadline !== null ? parsed.deadline : (item as Todo).deadline,
         });
       } else if (item.type === 'event') {
         Object.assign(updates, {
