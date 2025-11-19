@@ -9,6 +9,12 @@
 
 This roadmap tracks the implementation of features from the complete specification document. Features are organized by priority and implementation phase.
 
+### Core Philosophy
+
+**"Not Scheduled = Won't Be Done"**
+
+This app enforces a strict scheduling philosophy: **every single task, event, and routine must have a date and time**. There are no "unscheduled" items in this system. If something doesn't have a specific time assigned, it doesn't exist in the app. This intentional constraint encourages mindful planning and prevents the accumulation of vague, never-completed tasks.
+
 ### Current Implementation Status
 
 #### ✅ Completed Features (MVP)
@@ -35,37 +41,22 @@ This roadmap tracks the implementation of features from the complete specificati
 
 ### 🔴 High Priority (Phase 1)
 
-#### 1. Daily Review Fixes ⚠️
-**Status**: Partially implemented, needs correction
+#### 1. Daily Review Enhancements ⚠️
+**Status**: Partially implemented, needs improvements
 
-**Current Issue**: Daily Review shows only *unscheduled* todos from past days.
+**Current Behavior**: Daily Review shows incomplete todos from past days.
 
-**Required Behavior** (per clarification):
-- Show ALL undone (incomplete) todos from past days, regardless of scheduled status
-- Include both scheduled and unscheduled todos that remain incomplete
-
-**Implementation**:
-```typescript
-// Fix in DailyReview.tsx
-// Change filter from:
-todo.createdDate < today && !todo.scheduledTime && !todo.completedAt
-
-// To:
-todo.createdDate < today && !todo.completedAt
-```
+**Philosophy Alignment**: Since all items in this app must be scheduled (see Core Philosophy above), Daily Review shows all incomplete scheduled todos from previous days that need to be rescheduled or completed.
 
 **Additional Requirements**:
-- [ ] Completion linking (create CompletionLink on complete)
-- [ ] Create completion entry in today's Thoughts when completed from review
 - [ ] Track handled items for auto-completion
 - [ ] Auto-complete Daily Review when all items handled
-- [ ] Pagination for 20+ items ("Load next 20" button)
+- [ ] Pagination for 10+ items ("Load next 10" button)
 - [ ] Display subtasks nested in review items
 
 **Files to modify**:
 - `src/components/DailyReview.tsx`
-- `src/store/useStore.ts` (add completion linking logic)
-- `src/types.ts` (add CompletionLink interface if needed)
+- `src/store/useStore.ts` (add auto-completion logic)
 
 ---
 
@@ -95,39 +86,31 @@ todo.createdDate < today && !todo.completedAt
 
 ---
 
-#### 3. Drag & Drop System (Feature 9) 🚀
-**Status**: Not implemented
+#### 3. Drag & Drop System (Feature 9) 🔵
+**Status**: Not implemented - **Deferred (not a priority for now)**
 
-**Requirements**:
+**Note**: Cross-pane drag & drop (from Thoughts to Time) is not a priority at this stage. Items can be scheduled through other means (Daily Review reschedule, direct scheduling interface). Within-pane reordering may be implemented in the future.
+
+**Future Requirements** (when implemented):
 
 **Desktop**:
 - [ ] Install @dnd-kit/core library
 - [ ] Hover cursor changes to grab hand
 - [ ] Item lifts with shadow, opacity 0.7, 2deg rotation
-- [ ] Timeline shows drop zones with dashed borders
-- [ ] Drop zone highlights on hover (background #1A1A1A)
-- [ ] Schedule item on drop
-- [ ] Item remains in Thoughts with time indicator
+- [ ] Within-pane reordering (if needed)
 
 **Mobile**:
 - [ ] Long-press detection (500ms)
 - [ ] Haptic feedback on drag start
-- [ ] Swipe right to Times pane while dragging
-- [ ] Visual indicator for drop location
-- [ ] Smooth animation on drop
+- [ ] Touch-based reordering
 
 **Constraints**:
 - [ ] Cannot drag completed items (opacity 0.4, not draggable)
 - [ ] Cannot drag items within Daily Review (use [↷] button)
-- [ ] Cannot drag FROM Time TO Thoughts (cannot "unschedule" by dragging)
 - [ ] Dragging parent todo brings all subtasks
 - [ ] Cannot drag subtasks independently
 
-**Validation**:
-- [ ] Validate target date (past infinite, future max 1 year)
-- [ ] Show error for invalid date ranges
-
-**Files to create/modify**:
+**Files to create/modify** (future):
 - Install: `npm install @dnd-kit/core @dnd-kit/utilities`
 - `src/components/ThoughtsPane.tsx` (draggable items)
 - `src/components/TimePane.tsx` (drop zones)
@@ -144,10 +127,11 @@ todo.createdDate < today && !todo.completedAt
 **Requirements**:
 - [ ] Search icon in header (🔍)
 - [ ] Keyboard shortcut: Cmd/Ctrl + F
-- [ ] Scope: searches only active/focused pane
-- [ ] Full-text search with PostgreSQL syntax
+- [ ] Scope: searches both panes simultaneously (Thoughts & Time)
+- [ ] Full-text search capability
 - [ ] Tag search with # symbol
 - [ ] Results show date, time, full item with symbol, tags
+- [ ] Results grouped by pane (Thoughts results, then Time results)
 - [ ] Highlight matching text
 - [ ] Click result navigates to day and scrolls to item
 - [ ] ESC / [×] button to close search
@@ -196,39 +180,7 @@ if (itemsDuring.length > 0) {
 
 ---
 
-#### 6. Completion Linking System
-**Status**: Partially implemented in store, not in UI
-
-**Requirements**:
-- [ ] Create CompletionLink on todo completion
-- [ ] Original item shows "completed on Oct 14 →"
-- [ ] Completion entry created in today's Thoughts
-- [ ] Completion entry shows "← from Oct 12"
-- [ ] Click links to navigate between days
-- [ ] Uncompleting removes completion entry and link
-- [ ] Deleting original deletes completion entry
-- [ ] Deleting completion reverts original to uncompleted
-
-**Visual Specs**:
-```
-Oct 12 Thoughts:
-☑ ~~Call mom~~ #family
-  completed on Oct 14 →
-
-Oct 14 Thoughts:
-☑ ~~Call mom (completed)~~ #family
-  ← from Oct 12
-```
-
-**Files to create/modify**:
-- `src/types.ts` (add CompletionLink interface)
-- `src/store/useStore.ts` (add completion linking logic)
-- `src/components/ItemDisplay.tsx` (show completion links)
-- `src/components/DailyReview.tsx` (create links on complete)
-
----
-
-#### 7. URL Link Previews for Notes
+#### 6. URL Link Previews for Notes
 **Status**: Not implemented
 
 **Requirements**:
@@ -260,7 +212,7 @@ domain: 13px, #6A6A6A
 
 ---
 
-#### 8. Note Embedding in Todos
+#### 7. Note Embedding in Todos
 **Status**: Not implemented
 
 **Requirements**:
@@ -288,6 +240,38 @@ domain: 13px, #6A6A6A
 ---
 
 ### 🟢 Lower Priority (Phase 3)
+
+#### 8. Completion Linking System
+**Status**: Partially implemented in store, not in UI - **Not a priority**
+
+**Requirements**:
+- [ ] Create CompletionLink on todo completion
+- [ ] Original item shows "completed on Oct 14 →"
+- [ ] Completion entry created in today's Thoughts
+- [ ] Completion entry shows "← from Oct 12"
+- [ ] Click links to navigate between days
+- [ ] Uncompleting removes completion entry and link
+- [ ] Deleting original deletes completion entry
+- [ ] Deleting completion reverts original to uncompleted
+
+**Visual Specs**:
+```
+Oct 12 Thoughts:
+☑ ~~Call mom~~ #family
+  completed on Oct 14 →
+
+Oct 14 Thoughts:
+☑ ~~Call mom (completed)~~ #family
+  ← from Oct 12
+```
+
+**Files to create/modify**:
+- `src/types.ts` (add CompletionLink interface)
+- `src/store/useStore.ts` (add completion linking logic)
+- `src/components/ItemDisplay.tsx` (show completion links)
+- `src/components/DailyReview.tsx` (create links on complete)
+
+---
 
 #### 9. Database Backend (Supabase)
 **Status**: Not implemented (currently localStorage only)
@@ -459,12 +443,11 @@ domain: 13px, #6A6A6A
 6. **Todo subtasks: max depth 1, todos only** - No prefixes, always todos
 7. **Note sub-items: max depth 2, any type** - Use prefixes * t e r
 8. **Org Mode inspiration** - Freedom to mix types within notes
-9. **Search scope** - Never both panes simultaneously
-10. **Drag prohibition** - Cannot drag from Time to Thoughts
-11. **Completion linking** - Always create both entries + link
-12. **Waiting days** - Calculate from created_date, not scheduled_time
-13. **Hierarchy validation** - Enforce depth limits and type constraints
-14. **Order preservation** - Use order_index for sub-item sequencing
+9. **Search scope** - Searches both panes simultaneously (Thoughts & Time)
+10. **No unscheduled items** - Every task, event, and routine must have a date and time
+11. **Waiting days** - Calculate from created_date, not scheduled_time
+12. **Hierarchy validation** - Enforce depth limits and type constraints
+13. **Order preservation** - Use order_index for sub-item sequencing
 
 ### Two Hierarchy Systems
 
@@ -522,26 +505,25 @@ domain: 13px, #6A6A6A
 ## Next Steps
 
 ### Immediate (This Week)
-1. Fix Daily Review to show ALL undone todos (not just unscheduled)
-2. Add completion linking functionality
-3. Begin Drag & Drop implementation
+1. Enhance Daily Review (pagination at 10+ items, auto-completion)
+2. Complete subtask enhancements (validation, metadata display)
+3. Begin search functionality implementation
 
 ### Short Term (Next 2 Weeks)
-1. Complete Drag & Drop system (desktop + mobile)
-2. Enhance subtasks (drag behavior, validation)
-3. Implement search functionality
-4. Add event auto-splitting
+1. Implement search functionality (both panes simultaneously)
+2. Add event auto-splitting logic
+3. URL link previews for notes
+4. Note embedding in todos
 
 ### Medium Term (Next Month)
-1. Implement completion linking UI
-2. Add URL link previews
-3. Note embedding in todos
-4. Mobile responsive optimizations
+1. Mobile responsive optimizations
+2. Performance optimizations
+3. Consider completion linking system (if needed)
 
 ### Long Term (Next Quarter)
 1. Database backend (Supabase)
 2. Notifications system
-3. Performance optimizations
+3. Drag & Drop system (if needed)
 4. Accessibility audit and improvements
 5. Beta testing and polish
 
