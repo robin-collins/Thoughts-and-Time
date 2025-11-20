@@ -3,10 +3,12 @@ import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import DailyReview from './DailyReview';
-import { Item, Todo, Event as EventType, Note, Routine } from '../types';
+import TimePromptModal from './TimePromptModal';
+import { Item, Todo, Event as EventType, Routine } from '../types';
 import { parseInput } from '../utils/parser';
 import { createItem } from '../utils/itemFactory';
 import { symbolsToPrefix, formatTimeForDisplay } from '../utils/formatting';
+import { matchesSearch } from '../utils/search.tsx';
 
 type TimelineEntry = {
   time: Date;
@@ -52,40 +54,10 @@ function TimePane({
   const isTransitioning = useRef(false);
   const wheelDeltaY = useRef(0);
   const [timePrompt, setTimePrompt] = useState<{ content: string; isEvent: boolean; itemId: string } | null>(null);
-  const [promptedTime, setPromptedTime] = useState('');
-  const [promptedEndTime, setPromptedEndTime] = useState('');
-
-  // Filter function: recursively check if item or its children match search
-  const matchesSearch = (item: Item, query: string): boolean => {
-    if (!query) return true;
-
-    const lowerQuery = query.toLowerCase();
-
-    // Check content
-    if (item.content.toLowerCase().includes(lowerQuery)) {
-      return true;
-    }
-
-    // Recursively check sub-items
-    const subItemIds = item.type === 'note'
-      ? (item as Note).subItems
-      : item.type === 'todo'
-        ? (item as Todo).subtasks
-        : [];
-
-    for (const subId of subItemIds) {
-      const subItem = items.find(i => i.id === subId);
-      if (subItem && matchesSearch(subItem, query)) {
-        return true;
-      }
-    }
-
-    return false;
-  };
 
   // Filter items based on search query
   const filteredItems = searchQuery
-    ? items.filter(item => matchesSearch(item, searchQuery))
+    ? items.filter(item => matchesSearch(item, searchQuery, items))
     : items;
 
   // Compute timeline entries grouped by date
@@ -361,84 +333,8 @@ function TimePane({
   };
 
 
-  const handleTimePromptSubmit = () => {
-    if (!timePrompt || !promptedTime) return;
-
-    // For events, also require end time
-    if (timePrompt.isEvent && !promptedEndTime) return;
-
-    const currentItem = items.find(i => i.id === timePrompt.itemId);
-    if (!currentItem) return;
-
-    // Update content with time (formatted for readability)
-    let updatedContent: string;
-    if (timePrompt.isEvent) {
-      // Events: "from X to Y"
-      updatedContent = timePrompt.content + ' from ' + formatTimeForDisplay(promptedTime, timeFormat) + ' to ' + formatTimeForDisplay(promptedEndTime, timeFormat);
-    } else {
-      // Tasks/Routines: "at X"
-      updatedContent = timePrompt.content + ' at ' + formatTimeForDisplay(promptedTime, timeFormat);
-    }
-
-    // Convert symbols back to prefixes before parsing
-    const contentWithPrefix = symbolsToPrefix(updatedContent);
-
-    // Re-parse with time included
-    const parsed = parseInput(contentWithPrefix);
-
-    // If type changed, delete old item and create new one
-    if (parsed.type !== currentItem.type) {
-      // Create new item with parsed data, preserving original creation time
-      const newItemData = createItem({
-        content: parsed.content,
-        createdAt: currentItem.createdAt,
-        createdDate: currentItem.createdDate,
-        parsed,
-        userId: currentItem.userId,
-      });
-
-      // Delete old and add new
-      const addItemDirect = useStore.getState().addItemDirect;
-      deleteItem(timePrompt.itemId);
-      addItemDirect({ ...newItemData, id: timePrompt.itemId });
-    } else {
-      // Same type, just update
-      const updates: Partial<Item> = { content: parsed.content };
-
-      if (currentItem.type === 'todo') {
-        Object.assign(updates, {
-          scheduledTime: parsed.scheduledTime !== null ? parsed.scheduledTime : (currentItem as Todo).scheduledTime,
-          hasTime: parsed.hasTime,
-        });
-      } else if (currentItem.type === 'event') {
-        Object.assign(updates, {
-          startTime: parsed.scheduledTime || (currentItem as EventType).startTime,
-          endTime: parsed.endTime || parsed.scheduledTime || (currentItem as EventType).endTime,
-          hasTime: parsed.hasTime,
-        });
-      } else if (currentItem.type === 'routine') {
-        Object.assign(updates, {
-          scheduledTime: parsed.scheduledTime ? format(parsed.scheduledTime, 'HH:mm') : (currentItem as Routine).scheduledTime,
-          hasTime: parsed.hasTime,
-          recurrencePattern: parsed.recurrencePattern || (currentItem as Routine).recurrencePattern,
-        });
-      }
-
-      updateItem(timePrompt.itemId, updates);
-    }
-
-    // Clear time prompt and editing state
-    setTimePrompt(null);
-    setPromptedTime('');
-    setPromptedEndTime('');
-    setEditingItem(null);
-    setEditContent('');
-  };
-
   const handleTimePromptCancel = () => {
     setTimePrompt(null);
-    setPromptedTime('');
-    setPromptedEndTime('');
   };
 
   // Handle input change with symbol conversion
@@ -756,89 +652,73 @@ function TimePane({
     }
   };
 
+  const handleTimePromptModalSubmit = (time: string, endTime?: string) => {
+    if (!timePrompt) return;
+
+    const currentItem = items.find(i => i.id === timePrompt.itemId);
+    if (!currentItem) return;
+
+    let updatedContent: string;
+    if (timePrompt.isEvent && endTime) {
+      updatedContent = timePrompt.content + ' from ' + formatTimeForDisplay(time, timeFormat) + ' to ' + formatTimeForDisplay(endTime, timeFormat);
+    } else {
+      updatedContent = timePrompt.content + ' at ' + formatTimeForDisplay(time, timeFormat);
+    }
+
+    const contentWithPrefix = symbolsToPrefix(updatedContent);
+    const parsed = parseInput(contentWithPrefix);
+
+    if (parsed.type !== currentItem.type) {
+      const newItemData = createItem({
+        content: parsed.content,
+        createdAt: currentItem.createdAt,
+        createdDate: currentItem.createdDate,
+        parsed,
+        userId: currentItem.userId,
+      });
+
+      const addItemDirect = useStore.getState().addItemDirect;
+      deleteItem(timePrompt.itemId);
+      addItemDirect({ ...newItemData, id: timePrompt.itemId });
+    } else {
+      const updates: Partial<Item> = { content: parsed.content };
+
+      if (currentItem.type === 'todo') {
+        Object.assign(updates, {
+          scheduledTime: parsed.scheduledTime !== null ? parsed.scheduledTime : (currentItem as Todo).scheduledTime,
+          hasTime: parsed.hasTime,
+        });
+      } else if (currentItem.type === 'event') {
+        Object.assign(updates, {
+          startTime: parsed.scheduledTime || (currentItem as EventType).startTime,
+          endTime: parsed.endTime || parsed.scheduledTime || (currentItem as EventType).endTime,
+          hasTime: parsed.hasTime,
+        });
+      } else if (currentItem.type === 'routine') {
+        Object.assign(updates, {
+          scheduledTime: parsed.scheduledTime ? format(parsed.scheduledTime, 'HH:mm') : (currentItem as Routine).scheduledTime,
+          hasTime: parsed.hasTime,
+          recurrencePattern: parsed.recurrencePattern || (currentItem as Routine).recurrencePattern,
+        });
+      }
+
+      updateItem(timePrompt.itemId, updates);
+    }
+
+    setTimePrompt(null);
+    setEditingItem(null);
+    setEditContent('');
+  };
+
   return (
     <>
-      {/* Time Prompt Modal */}
-      {timePrompt && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-background border border-border-subtle rounded-sm p-24 max-w-md w-full mx-16">
-            <h3 className="text-base font-serif mb-16">
-              {timePrompt.isEvent ? 'When does it start and end?' : 'What time?'}
-            </h3>
-            <p className="text-sm text-text-secondary mb-16 font-serif">{timePrompt.content}</p>
-
-            {timePrompt.isEvent ? (
-              // Event: show start and end times
-              <div className="space-y-12">
-                <div>
-                  <label className="block text-xs font-mono text-text-secondary mb-4">Start time</label>
-                  <input
-                    type="time"
-                    value={promptedTime}
-                    onChange={(e) => setPromptedTime(e.target.value)}
-                    className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleTimePromptSubmit();
-                      } else if (e.key === 'Escape') {
-                        handleTimePromptCancel();
-                      }
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-mono text-text-secondary mb-4">End time</label>
-                  <input
-                    type="time"
-                    value={promptedEndTime}
-                    onChange={(e) => setPromptedEndTime(e.target.value)}
-                    className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm mb-16"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleTimePromptSubmit();
-                      } else if (e.key === 'Escape') {
-                        handleTimePromptCancel();
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            ) : (
-              // Task/Routine: show single time
-              <input
-                type="time"
-                value={promptedTime}
-                onChange={(e) => setPromptedTime(e.target.value)}
-                className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm mb-16"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleTimePromptSubmit();
-                  } else if (e.key === 'Escape') {
-                    handleTimePromptCancel();
-                  }
-                }}
-              />
-            )}
-
-            <div className="flex gap-8 justify-end mt-16">
-              <button
-                onClick={handleTimePromptCancel}
-                className="px-16 py-8 text-sm font-mono text-text-secondary hover:text-text-primary"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleTimePromptSubmit}
-                className="px-16 py-8 text-sm font-mono text-text-primary border border-border-subtle rounded-sm hover:bg-hover-bg"
-              >
-                {timePrompt.isEvent ? 'Add Times' : 'Add Time'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <TimePromptModal
+        isOpen={!!timePrompt}
+        isEvent={timePrompt?.isEvent || false}
+        content={timePrompt?.content || ''}
+        onSubmit={handleTimePromptModalSubmit}
+        onCancel={handleTimePromptCancel}
+      />
 
       <div className="h-full flex flex-col">
         {/* Pane Header */}

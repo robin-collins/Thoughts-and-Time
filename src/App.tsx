@@ -7,9 +7,11 @@ import ToastContainer from './components/Toast';
 import { useSettingsStore } from './store/useSettingsStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useUndoRedo } from './hooks/useUndoRedo';
+import { useDebouncedSearch } from './hooks/useDebouncedSearch';
 
 function App() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const searchQuery = useDebouncedSearch(searchInput, 300);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const viewMode = useSettingsStore((state) => state.viewMode);
@@ -97,7 +99,7 @@ function App() {
       handler: () => {
         if (isSearchOpen) {
           setIsSearchOpen(false);
-          setSearchQuery('');
+          setSearchInput('');
         } else if (isSettingsOpen) {
           setIsSettingsOpen(false);
         }
@@ -118,10 +120,10 @@ function App() {
           {isSearchOpen && (
             <input
               type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               onBlur={() => {
-                if (!searchQuery) {
+                if (!searchInput) {
                   setIsSearchOpen(false);
                 }
               }}
@@ -134,7 +136,7 @@ function App() {
             onClick={() => {
               setIsSearchOpen(!isSearchOpen);
               if (isSearchOpen) {
-                setSearchQuery('');
+                setSearchInput('');
               }
             }}
             className="text-base hover:opacity-70 transition-opacity"
