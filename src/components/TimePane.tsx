@@ -11,6 +11,7 @@ import { parseInput } from '../utils/parser';
 import { createItem } from '../utils/itemFactory';
 import { symbolsToPrefix, formatTimeForDisplay, prefixToSymbol, symbolToPrefix } from '../utils/formatting';
 import { matchesSearch } from '../utils/search.tsx';
+import { ANIMATION, DATE_RANGE } from '../constants';
 
 type TimelineEntry = {
   time: Date;
@@ -149,11 +150,11 @@ function TimePane({
     return map;
   }, [filteredItems, scheduledTodos, timeFormat]);
 
-  // Generate date range: 30 days past to 30 days future
+  // Generate date range: past to future days
   const today = format(new Date(), 'yyyy-MM-dd');
   const dates: string[] = [];
 
-  for (let i = -30; i <= 30; i++) {
+  for (let i = -DATE_RANGE.PAST_DAYS; i <= DATE_RANGE.FUTURE_DAYS; i++) {
     const date = i === 0
       ? new Date()
       : i < 0
@@ -184,7 +185,7 @@ function TimePane({
       wheelDeltaY.current += e.deltaY;
 
       // Threshold to prevent accidental triggers - requires intentional over-scroll
-      if (wheelDeltaY.current > 150) {
+      if (wheelDeltaY.current > ANIMATION.WHEEL_DELTA_THRESHOLD) {
         // Scroll down = next day
         wheelDeltaY.current = 0;
         isTransitioning.current = true;
@@ -196,10 +197,10 @@ function TimePane({
             setTimeout(() => {
               setIsPageFlipping(false);
               isTransitioning.current = false;
-            }, 600);
-          }, 50);
-        }, 50);
-      } else if (wheelDeltaY.current < -150) {
+            }, ANIMATION.PAGE_FLIP_DURATION);
+          }, ANIMATION.SCROLL_RESET_DELAY);
+        }, ANIMATION.SCROLL_RESET_DELAY);
+      } else if (wheelDeltaY.current < -ANIMATION.WHEEL_DELTA_THRESHOLD) {
         // Scroll up = previous day
         wheelDeltaY.current = 0;
         isTransitioning.current = true;
@@ -211,9 +212,9 @@ function TimePane({
             setTimeout(() => {
               setIsPageFlipping(false);
               isTransitioning.current = false;
-            }, 600);
-          }, 50);
-        }, 50);
+            }, ANIMATION.PAGE_FLIP_DURATION);
+          }, ANIMATION.SCROLL_RESET_DELAY);
+        }, ANIMATION.SCROLL_RESET_DELAY);
       }
     } else {
       // Reset delta when scrolling normally (not at boundaries)

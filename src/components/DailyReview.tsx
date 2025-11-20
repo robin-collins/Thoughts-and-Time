@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { format, differenceInDays } from 'date-fns';
 import { useStore } from '../store/useStore';
 import { useToast } from '../hooks/useToast';
-import { Todo, Item } from '../types';
+import { Todo } from '../types';
 import { parseInput } from '../utils/parser';
+import { matchesSearch } from '../utils/search';
 import ConfirmDialog from './ConfirmDialog';
 
 interface DailyReviewItem {
@@ -30,31 +31,6 @@ function DailyReview({ searchQuery = '' }: DailyReviewProps) {
   const today = format(new Date(), 'yyyy-MM-dd');
   const now = new Date();
 
-  // Filter function: recursively check if item or its children match search
-  const matchesSearch = (item: Item, query: string): boolean => {
-    if (!query) return true;
-
-    const lowerQuery = query.toLowerCase();
-
-    // Check content
-    if (item.content.toLowerCase().includes(lowerQuery)) {
-      return true;
-    }
-
-    // Recursively check subtasks for todos
-    if (item.type === 'todo') {
-      const todo = item as Todo;
-      for (const subtaskId of todo.subtasks) {
-        const subtask = items.find(i => i.id === subtaskId);
-        if (subtask && matchesSearch(subtask, query)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  };
-
   // Generate ALL undone todos from previous days (scheduled or unscheduled)
   // Only include parent-level todos (not subtasks)
   const reviewItems: DailyReviewItem[] = items
@@ -72,7 +48,7 @@ function DailyReview({ searchQuery = '' }: DailyReviewProps) {
       );
 
       // Apply search filter
-      return isReviewCandidate && matchesSearch(item, searchQuery);
+      return isReviewCandidate && matchesSearch(item, searchQuery, items);
     })
     .map((item) => {
       const todo = item as Todo;
