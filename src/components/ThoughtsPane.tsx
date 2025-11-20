@@ -402,11 +402,6 @@ function ThoughtsPane({
         onCancel={handleTimePromptCancel}
       />
 
-      {/* Pane Header */}
-      <div className="h-[36px] border-b border-border-subtle flex items-center px-24">
-        <h2 className="text-xs font-serif uppercase tracking-wider">Thoughts</h2>
-      </div>
-
       {/* Items Area - Scrollable through all days */}
       <div
         ref={scrollRef}

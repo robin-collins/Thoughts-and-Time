@@ -8,7 +8,7 @@ import { Item, Todo, Note } from '../types';
  * Must be called once in the app root
  */
 export function useUndoRedo() {
-  const { addItemDirect, updateItem, deleteItem, toggleTodoComplete, setSkipHistory } = useStore();
+  const { addItemDirect, addItemAtIndex, updateItem, deleteItem, toggleTodoComplete, setSkipHistory } = useStore();
   const { setUndoHandler, setRedoHandler, undoStack, redoStack } = useHistory();
 
   useEffect(() => {
@@ -33,10 +33,18 @@ export function useUndoRedo() {
           break;
 
         case 'delete':
-          // Undo delete: restore all deleted items
-          if (action.deletedItems) {
-            action.deletedItems.forEach((item) => {
-              addItemDirect(item);
+          // Undo delete: restore all deleted items at their original positions
+          if (action.deletedItems && action.deletedIndices) {
+            // Restore items in order of their original indices (ascending)
+            // to maintain correct positions
+            const itemsWithIndices = action.deletedItems.map((item, i) => ({
+              item,
+              index: action.deletedIndices![i],
+            }));
+            itemsWithIndices.sort((a, b) => a.index - b.index);
+
+            itemsWithIndices.forEach(({ item, index }) => {
+              addItemAtIndex(item, index);
             });
 
             // Restore parent-child relationships
@@ -63,6 +71,11 @@ export function useUndoRedo() {
                   }
                 }
               }
+            });
+          } else if (action.deletedItems) {
+            // Fallback for old history entries without indices
+            action.deletedItems.forEach((item) => {
+              addItemDirect(item);
             });
           }
           break;
@@ -166,6 +179,7 @@ export function useUndoRedo() {
     setUndoHandler,
     setRedoHandler,
     addItemDirect,
+    addItemAtIndex,
     updateItem,
     deleteItem,
     toggleTodoComplete,

@@ -727,11 +727,6 @@ function TimePane({
       />
 
       <div className="h-full flex flex-col">
-        {/* Pane Header */}
-        <div className="h-[36px] border-b border-border-subtle flex items-center px-24">
-          <h2 className="text-xs font-serif uppercase tracking-wider">Time</h2>
-        </div>
-
       {/* Timeline - Scrollable through all days */}
       <div
         ref={scrollRef}
