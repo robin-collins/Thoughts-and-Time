@@ -83,9 +83,10 @@ export function useUndoRedo() {
             // Extract only the fields that were updated
             const revertUpdates: Partial<Item> = {};
             if (action.updates) {
+              const oldItem = action.oldItem as unknown as Record<string, unknown>;
               Object.keys(action.updates).forEach((key) => {
                 const k = key as keyof Item;
-                (revertUpdates as Record<string, unknown>)[k] = (action.oldItem as Record<string, unknown>)[k];
+                (revertUpdates as Record<string, unknown>)[k] = oldItem[k];
               });
             }
             updateItem(action.itemId, revertUpdates);

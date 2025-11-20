@@ -64,8 +64,9 @@ function TimePane({
   const entriesByDate = new Map<string, TimelineEntry[]>();
 
   // First, collect all scheduled todos for checking event overlaps
+  // Use ALL items (not filtered) to ensure split detection works during search
   const scheduledTodos: Array<{ time: Date; item: Todo }> = [];
-  filteredItems.forEach((item) => {
+  items.forEach((item) => {
     if (item.type === 'todo') {
       const todo = item as Todo;
       if (todo.scheduledTime) {
@@ -641,14 +642,72 @@ function TimePane({
       );
     } else {
       // event-end
+      const event = item as EventType;
+      const startTime = formatTime(new Date(event.startTime));
+      const endTime = formatTime(new Date(event.endTime));
+      const isEditing = editingItem === item.id;
+      const isHovered = hoveredItem === item.id;
+
       return (
-        <div className="flex items-start gap-3">
-          <span className="text-base leading-book flex-shrink-0">⇥</span>
-          <div className="flex-1">
-            <p className="text-base font-serif leading-book font-semibold">
-              {item.content} (end)
-            </p>
-          </div>
+        <div
+          onMouseEnter={() => setHoveredItem(item.id)}
+          onMouseLeave={() => setHoveredItem(null)}
+        >
+          {isEditing ? (
+            <div className="flex items-center gap-8">
+              <input
+                type="text"
+                value={editContent}
+                onChange={handleInputChange}
+                onKeyDown={(e) => handleKeyDown(e, item.id)}
+                className="flex-1 px-8 py-4 bg-hover-bg border border-border-subtle rounded-sm font-serif text-base"
+                autoFocus
+              />
+              <button
+                onClick={() => handleSaveEdit(item.id)}
+                className="text-sm text-text-secondary hover:text-text-primary"
+                title="Save (Enter)"
+              >
+                ✓
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                className="text-sm text-text-secondary hover:text-text-primary"
+                title="Cancel (Esc)"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-start gap-3">
+              <span className="text-base leading-book flex-shrink-0">⇥</span>
+              <div className="flex-1">
+                <div className="flex items-start gap-8">
+                  <p className="flex-1 text-base font-serif leading-book font-semibold">
+                    {item.content} ({startTime} - {endTime})
+                  </p>
+                  {isHovered && (
+                    <div className="flex gap-4 flex-shrink-0">
+                      <button
+                        onClick={() => handleEdit(item.id, item)}
+                        className="text-xs text-text-secondary hover:text-text-primary"
+                        title="Edit"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        className="text-xs text-text-secondary hover:text-text-primary"
+                        title="Delete"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
