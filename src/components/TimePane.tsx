@@ -4,6 +4,7 @@ import { useStore } from '../store/useStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import DailyReview from './DailyReview';
 import TimePromptModal from './TimePromptModal';
+import ConfirmDialog from './ConfirmDialog';
 import { Item, Todo, Event as EventType, Routine } from '../types';
 import { parseInput } from '../utils/parser';
 import { createItem } from '../utils/itemFactory';
@@ -54,6 +55,7 @@ function TimePane({
   const isTransitioning = useRef(false);
   const wheelDeltaY = useRef(0);
   const [timePrompt, setTimePrompt] = useState<{ content: string; isEvent: boolean; itemId: string } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; itemId: string | null }>({ isOpen: false, itemId: null });
 
   // Filter items based on search query
   const filteredItems = searchQuery
@@ -421,9 +423,14 @@ function TimePane({
   };
 
   const handleDelete = (itemId: string) => {
-    if (confirm('Delete this item?')) {
-      deleteItem(itemId);
+    setConfirmDelete({ isOpen: true, itemId });
+  };
+
+  const handleConfirmDelete = () => {
+    if (confirmDelete.itemId) {
+      deleteItem(confirmDelete.itemId);
     }
+    setConfirmDelete({ isOpen: false, itemId: null });
   };
 
   const renderEntry = (entry: TimelineEntry) => {
@@ -780,6 +787,17 @@ function TimePane({
         timeFormat={timeFormat}
         onSubmit={handleTimePromptModalSubmit}
         onCancel={handleTimePromptCancel}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDelete.isOpen}
+        title="Delete Item"
+        message="Are you sure you want to delete this item?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDelete({ isOpen: false, itemId: null })}
       />
 
       <div className="h-full flex flex-col">
