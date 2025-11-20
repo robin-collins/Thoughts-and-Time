@@ -44,31 +44,31 @@ describe('symbolsToPrefix', () => {
 describe('formatTimeForDisplay', () => {
   describe('12-hour format', () => {
     it('formats morning time', () => {
-      expect(formatTimeForDisplay('09:30', '12h')).toBe('9:30am');
+      expect(formatTimeForDisplay('09:30', '12h')).toBe('9:30 am');
     });
 
     it('formats noon', () => {
-      expect(formatTimeForDisplay('12:00', '12h')).toBe('12:00pm');
+      expect(formatTimeForDisplay('12:00', '12h')).toBe('12:00 pm');
     });
 
     it('formats midnight', () => {
-      expect(formatTimeForDisplay('00:00', '12h')).toBe('12:00am');
+      expect(formatTimeForDisplay('00:00', '12h')).toBe('12:00 am');
     });
 
     it('formats afternoon time', () => {
-      expect(formatTimeForDisplay('14:30', '12h')).toBe('2:30pm');
+      expect(formatTimeForDisplay('14:30', '12h')).toBe('2:30 pm');
     });
 
     it('formats evening time', () => {
-      expect(formatTimeForDisplay('23:45', '12h')).toBe('11:45pm');
+      expect(formatTimeForDisplay('23:45', '12h')).toBe('11:45 pm');
     });
 
     it('defaults to 12-hour format when no format specified', () => {
-      expect(formatTimeForDisplay('15:20')).toBe('3:20pm');
+      expect(formatTimeForDisplay('15:20')).toBe('3:20 pm');
     });
 
     it('pads single-digit minutes', () => {
-      expect(formatTimeForDisplay('09:05', '12h')).toBe('9:05am');
+      expect(formatTimeForDisplay('09:05', '12h')).toBe('9:05 am');
     });
   });
 

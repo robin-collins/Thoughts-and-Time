@@ -3,9 +3,11 @@ import { format, subDays, addDays, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import ItemDisplay from './ItemDisplay';
-import { Item, Todo, Note } from '../types';
+import TimePromptModal from './TimePromptModal';
+import { Item } from '../types';
 import { parseInput } from '../utils/parser';
 import { symbolsToPrefix, formatTimeForDisplay, prefixToSymbol, symbolToPrefix as symbolToPrefixMap } from '../utils/formatting';
+import { matchesSearch } from '../utils/search.tsx';
 
 interface ThoughtsPaneProps {
   searchQuery?: string;
@@ -30,44 +32,14 @@ function ThoughtsPane({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [timePrompt, setTimePrompt] = useState<{ line: string; index: number; isEvent: boolean } | null>(null);
-  const [promptedTime, setPromptedTime] = useState('');
-  const [promptedEndTime, setPromptedEndTime] = useState('');
   const [isPageFlipping, setIsPageFlipping] = useState(false);
   const lastScrollTop = useRef(0);
   const isTransitioning = useRef(false);
   const wheelDeltaY = useRef(0);
 
-  // Filter function: recursively check if item or its children match search
-  const matchesSearch = (item: Item, query: string): boolean => {
-    if (!query) return true;
-
-    const lowerQuery = query.toLowerCase();
-
-    // Check content
-    if (item.content.toLowerCase().includes(lowerQuery)) {
-      return true;
-    }
-
-    // Recursively check sub-items
-    const subItemIds = item.type === 'note'
-      ? (item as Note).subItems
-      : item.type === 'todo'
-        ? (item as Todo).subtasks
-        : [];
-
-    for (const subId of subItemIds) {
-      const subItem = items.find(i => i.id === subId);
-      if (subItem && matchesSearch(subItem, query)) {
-        return true;
-      }
-    }
-
-    return false;
-  };
-
   // Filter items based on search query
   const filteredItems = searchQuery
-    ? items.filter(item => matchesSearch(item, searchQuery))
+    ? items.filter(item => matchesSearch(item, searchQuery, items))
     : items;
 
   // Compute items grouped by date (recomputes when items change)
@@ -301,44 +273,8 @@ function ThoughtsPane({
   };
 
 
-  const handleTimePromptSubmit = () => {
-    if (!timePrompt || !promptedTime) return;
-
-    // For events, also require end time
-    if (timePrompt.isEvent && !promptedEndTime) return;
-
-    // Update the line with the time(s) (formatted for readability)
-    const lines = input.split('\n');
-    let updatedLine: string;
-
-    if (timePrompt.isEvent) {
-      // Events: "from X to Y"
-      updatedLine = lines[timePrompt.index].trimStart() + ' from ' + formatTimeForDisplay(promptedTime, timeFormat) + ' to ' + formatTimeForDisplay(promptedEndTime, timeFormat);
-    } else {
-      // Tasks: "at X"
-      updatedLine = lines[timePrompt.index].trimStart() + ' at ' + formatTimeForDisplay(promptedTime, timeFormat);
-    }
-
-    // Restore indentation
-    const leadingSpaces = lines[timePrompt.index].match(/^(\s*)/)?.[0] || '';
-    lines[timePrompt.index] = leadingSpaces + updatedLine;
-
-    setInput(lines.join('\n'));
-    setTimePrompt(null);
-    setPromptedTime('');
-    setPromptedEndTime('');
-
-    // Re-submit after a brief delay to allow state to update
-    setTimeout(() => {
-      const syntheticEvent = new Event('submit') as any;
-      handleSubmit(syntheticEvent);
-    }, 50);
-  };
-
   const handleTimePromptCancel = () => {
     setTimePrompt(null);
-    setPromptedTime('');
-    setPromptedEndTime('');
   };
 
   // Auto-scroll to bottom on mount (to show today)
@@ -346,6 +282,7 @@ function ThoughtsPane({
     if (scrollRef.current && isAtBottom) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleWheel = (e: WheelEvent) => {
@@ -415,94 +352,48 @@ function ThoughtsPane({
   useEffect(() => {
     const scrollEl = scrollRef.current;
     if (scrollEl && viewMode === 'book') {
-      scrollEl.addEventListener('wheel', handleWheel as any);
-      return () => scrollEl.removeEventListener('wheel', handleWheel as any);
+      scrollEl.addEventListener('wheel', handleWheel as EventListener);
+      return () => scrollEl.removeEventListener('wheel', handleWheel as EventListener);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, onNextDay, onPreviousDay]);
+
+  const handleTimePromptModalSubmit = (time: string, endTime?: string) => {
+    if (!timePrompt) return;
+
+    // Update the line with the time(s)
+    const lines = input.split('\n');
+    let updatedLine: string;
+
+    if (timePrompt.isEvent && endTime) {
+      updatedLine = lines[timePrompt.index].trimStart() + ' from ' + formatTimeForDisplay(time, timeFormat) + ' to ' + formatTimeForDisplay(endTime, timeFormat);
+    } else {
+      updatedLine = lines[timePrompt.index].trimStart() + ' at ' + formatTimeForDisplay(time, timeFormat);
+    }
+
+    const leadingSpaces = lines[timePrompt.index].match(/^(\s*)/)?.[0] || '';
+    lines[timePrompt.index] = leadingSpaces + updatedLine;
+
+    setInput(lines.join('\n'));
+    setTimePrompt(null);
+
+    // Re-submit after a brief delay
+    setTimeout(() => {
+      const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+      handleSubmit(syntheticEvent);
+    }, 50);
+  };
 
   return (
     <div className="h-full flex flex-col">
-      {/* Time Prompt Modal */}
-      {timePrompt && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-background border border-border-subtle rounded-sm p-24 max-w-md w-full mx-16">
-            <h3 className="text-base font-serif mb-16">
-              {timePrompt.isEvent ? 'When does it start and end?' : 'What time?'}
-            </h3>
-            <p className="text-sm text-text-secondary mb-16 font-serif">{timePrompt.line}</p>
-
-            {timePrompt.isEvent ? (
-              // Event: show start and end times
-              <div className="space-y-12">
-                <div>
-                  <label className="block text-xs font-mono text-text-secondary mb-4">Start time</label>
-                  <input
-                    type="time"
-                    value={promptedTime}
-                    onChange={(e) => setPromptedTime(e.target.value)}
-                    className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm"
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleTimePromptSubmit();
-                      } else if (e.key === 'Escape') {
-                        handleTimePromptCancel();
-                      }
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-mono text-text-secondary mb-4">End time</label>
-                  <input
-                    type="time"
-                    value={promptedEndTime}
-                    onChange={(e) => setPromptedEndTime(e.target.value)}
-                    className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm mb-16"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleTimePromptSubmit();
-                      } else if (e.key === 'Escape') {
-                        handleTimePromptCancel();
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            ) : (
-              // Task: show single time
-              <input
-                type="time"
-                value={promptedTime}
-                onChange={(e) => setPromptedTime(e.target.value)}
-                className="w-full px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm mb-16"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleTimePromptSubmit();
-                  } else if (e.key === 'Escape') {
-                    handleTimePromptCancel();
-                  }
-                }}
-              />
-            )}
-
-            <div className="flex gap-8 justify-end mt-16">
-              <button
-                onClick={handleTimePromptCancel}
-                className="px-16 py-8 text-sm font-mono text-text-secondary hover:text-text-primary"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleTimePromptSubmit}
-                className="px-16 py-8 text-sm font-mono text-text-primary border border-border-subtle rounded-sm hover:bg-hover-bg"
-              >
-                {timePrompt.isEvent ? 'Add Times' : 'Add Time'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <TimePromptModal
+        isOpen={!!timePrompt}
+        isEvent={timePrompt?.isEvent || false}
+        content={timePrompt?.line || ''}
+        timeFormat={timeFormat}
+        onSubmit={handleTimePromptModalSubmit}
+        onCancel={handleTimePromptCancel}
+      />
 
       {/* Pane Header */}
       <div className="h-[36px] border-b border-border-subtle flex items-center px-24">
@@ -561,6 +452,7 @@ function ThoughtsPane({
                       key={item.id}
                       item={item}
                       sourcePane="thoughts"
+                      searchQuery={searchQuery}
                     />
                   ))}
                 </div>

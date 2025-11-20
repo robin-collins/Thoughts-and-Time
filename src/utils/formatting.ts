@@ -29,7 +29,7 @@ export function formatTimeForDisplay(time24: string, format: '12h' | '24h' = '12
   // 12-hour format
   const period = hours >= 12 ? 'pm' : 'am';
   const hours12 = hours % 12 || 12;
-  return `${hours12}:${minutes.toString().padStart(2, '0')}${period}`;
+  return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
 /**

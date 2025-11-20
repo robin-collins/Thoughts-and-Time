@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { format, differenceInDays } from 'date-fns';
 import { useStore } from '../store/useStore';
+import { useToast } from '../hooks/useToast';
 import { Todo, Item } from '../types';
 import { parseInput } from '../utils/parser';
+import ConfirmDialog from './ConfirmDialog';
 
 interface DailyReviewItem {
   item: Todo;
@@ -18,10 +20,12 @@ function DailyReview({ searchQuery = '' }: DailyReviewProps) {
   const updateItem = useStore((state) => state.updateItem);
   const deleteItem = useStore((state) => state.deleteItem);
   const toggleTodoComplete = useStore((state) => state.toggleTodoComplete);
+  const addToast = useToast((state) => state.addToast);
   const [showRescheduler, setShowRescheduler] = useState<string | null>(null);
   const [rescheduleInput, setRescheduleInput] = useState('');
   const [handledItems, setHandledItems] = useState<Set<string>>(new Set());
   const [itemsToShow, setItemsToShow] = useState(10);
+  const [confirmCancel, setConfirmCancel] = useState<{ isOpen: boolean; itemId: string | null }>({ isOpen: false, itemId: null });
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const now = new Date();
@@ -111,7 +115,7 @@ function DailyReview({ searchQuery = '' }: DailyReviewProps) {
     const parsed = parseInput('t ' + rescheduleInput);
 
     if (!parsed) {
-      alert('Could not parse date/time. Try formats like "tomorrow 2pm", "friday at 3:30pm", "next monday 9am"');
+      addToast('Could not parse date/time. Try formats like "tomorrow 2pm", "friday at 3:30pm", "next monday 9am"', 'error');
       return;
     }
 
@@ -124,7 +128,7 @@ function DailyReview({ searchQuery = '' }: DailyReviewProps) {
       // Mark item as handled
       setHandledItems(prev => new Set(prev).add(itemId));
     } else {
-      alert('Please specify a date/time for rescheduling');
+      addToast('Please specify a date/time for rescheduling', 'error');
       return;
     }
 
@@ -139,11 +143,16 @@ function DailyReview({ searchQuery = '' }: DailyReviewProps) {
   };
 
   const handleCancel = (itemId: string) => {
-    if (confirm('Cancel this item permanently?')) {
-      deleteItem(itemId);
+    setConfirmCancel({ isOpen: true, itemId });
+  };
+
+  const handleConfirmCancel = () => {
+    if (confirmCancel.itemId) {
+      deleteItem(confirmCancel.itemId);
       // Mark item as handled
-      setHandledItems(prev => new Set(prev).add(itemId));
+      setHandledItems(prev => new Set(prev).add(confirmCancel.itemId!));
     }
+    setConfirmCancel({ isOpen: false, itemId: null });
   };
 
   if (reviewItems.length === 0) {
@@ -162,14 +171,26 @@ function DailyReview({ searchQuery = '' }: DailyReviewProps) {
   }
 
   return (
-    <div>
-      {/* Daily Review Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4">
-          <span className="text-base leading-book">■</span>
-          <h3 className="text-base font-serif font-semibold">Daily Review</h3>
+    <>
+      <ConfirmDialog
+        isOpen={confirmCancel.isOpen}
+        title="Cancel Item"
+        message="Are you sure you want to cancel this item permanently?"
+        confirmText="Cancel Item"
+        cancelText="Keep"
+        isDangerous={true}
+        onConfirm={handleConfirmCancel}
+        onCancel={() => setConfirmCancel({ isOpen: false, itemId: null })}
+      />
+
+      <div>
+        {/* Daily Review Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-4">
+            <span className="text-base leading-book">■</span>
+            <h3 className="text-base font-serif font-semibold">Daily Review</h3>
+          </div>
         </div>
-      </div>
 
       {/* Review Items */}
       <div className="space-y-6 pl-16">
@@ -296,7 +317,8 @@ function DailyReview({ searchQuery = '' }: DailyReviewProps) {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

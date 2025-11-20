@@ -5,22 +5,74 @@ import { Item, Todo, Event, Routine, Note } from '../types';
 import { parseInput, hasExplicitNotePrefix } from '../utils/parser';
 import { useHistory } from './useHistory';
 
+/**
+ * Main application state interface for Thoughts & Time.
+ *
+ * Manages all items (todos, events, routines, notes) with CRUD operations,
+ * history tracking for undo/redo, and computed getters for date-based views.
+ */
 interface AppState {
-  // Data
+  /** All items in the store */
   items: Item[];
-  skipHistory: boolean; // Flag to prevent recording during undo/redo
+  /** Flag to prevent recording history during undo/redo operations */
+  skipHistory: boolean;
 
-  // Actions
+  /**
+   * Add a new item by parsing user input.
+   * @param input - Raw user input with optional prefix (t, e, r, *)
+   * @param parentId - Optional parent item ID for nesting
+   * @param depthLevel - Nesting depth (0=top, 1=sub, 2=sub-sub)
+   * @returns The generated item ID
+   */
   addItem: (input: string, parentId?: string | null, depthLevel?: number) => string;
+
+  /**
+   * Add a pre-constructed item directly (used by undo/redo).
+   * @param item - Complete item object to add
+   */
   addItemDirect: (item: Item) => void;
+
+  /**
+   * Update an existing item's properties.
+   * @param id - Item ID to update
+   * @param updates - Partial item properties to merge
+   */
   updateItem: (id: string, updates: Partial<Item>) => void;
+
+  /**
+   * Delete an item and all its children (cascade delete).
+   * @param id - Item ID to delete
+   */
   deleteItem: (id: string) => void;
+
+  /**
+   * Toggle a todo's completion state. Cascades to subtasks.
+   * @param id - Todo item ID
+   */
   toggleTodoComplete: (id: string) => void;
+
+  /**
+   * Set the skipHistory flag (used during undo/redo).
+   * @param skip - Whether to skip history recording
+   */
   setSkipHistory: (skip: boolean) => void;
 
-  // Computed - get items grouped by date
+  /**
+   * Get all items grouped by creation date.
+   * @returns Map of date strings to item arrays
+   */
   getItemsByDate: () => Map<string, Item[]>;
+
+  /**
+   * Get scheduled items grouped by scheduled date.
+   * @returns Map of date strings to scheduled item arrays
+   */
   getScheduledItemsByDate: () => Map<string, Item[]>;
+
+  /**
+   * Get all dates that have items (created or scheduled).
+   * @returns Sorted array of date strings
+   */
   getAllDatesWithItems: () => string[];
 }
 
