@@ -459,9 +459,18 @@ export function parseInput(input: string): ParsedInput {
 
   // Determine if we need to prompt for time
   // For todos and events without a date OR without a specific time, we'll prompt
-  const needsTimePrompt =
+  let needsTimePrompt =
     (type === 'todo' || type === 'event') &&
     (scheduledTime === null || !hasTime);
+
+  // Final override: if content contains "at HH:MM" pattern, don't prompt
+  // This catches any cases where parseDateTime didn't properly detect the time
+  if (needsTimePrompt) {
+    const time24Override = content.match(/\bat\s+\d{1,2}:\d{2}\b/i);
+    if (time24Override) {
+      needsTimePrompt = false;
+    }
+  }
 
   // For all-day events, set to midnight-to-midnight
   if (type === 'event' && scheduledTime && !hasTime) {
