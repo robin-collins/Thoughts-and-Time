@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 
 interface TimeInputProps {
-  value: string; // HH:mm format
+  value: string; // HH:mm format (used only for initial value)
   onChange: (value: string) => void;
   timeFormat: '12h' | '24h';
   autoFocus?: boolean;
@@ -12,39 +12,13 @@ interface TimeInputProps {
  * Custom time input that respects the app's time format setting.
  * Displays in 12h or 24h format based on setting.
  */
-function TimeInput({ value, onChange, timeFormat, autoFocus, onKeyDown }: TimeInputProps) {
+function TimeInput({ onChange, timeFormat, autoFocus, onKeyDown }: TimeInputProps) {
   const [hours, setHours] = useState('');
   const [minutes, setMinutes] = useState('');
   const [period, setPeriod] = useState<'AM' | 'PM'>('AM');
-  const isInternalChange = useRef(false);
 
   const hoursRef = useRef<HTMLInputElement>(null);
   const minutesRef = useRef<HTMLInputElement>(null);
-
-  // Parse incoming value (HH:mm format) - only on external changes
-  useEffect(() => {
-    // Skip if this was triggered by our own onChange
-    if (isInternalChange.current) {
-      isInternalChange.current = false;
-      return;
-    }
-
-    if (value) {
-      const [h, m] = value.split(':').map(Number);
-      setMinutes(m.toString().padStart(2, '0'));
-
-      if (timeFormat === '12h') {
-        setPeriod(h >= 12 ? 'PM' : 'AM');
-        const h12 = h % 12 || 12;
-        setHours(h12.toString());
-      } else {
-        setHours(h.toString().padStart(2, '0'));
-      }
-    } else {
-      setHours('');
-      setMinutes('');
-    }
-  }, [value, timeFormat]);
 
   // Auto-focus hours input
   useEffect(() => {
@@ -53,8 +27,8 @@ function TimeInput({ value, onChange, timeFormat, autoFocus, onKeyDown }: TimeIn
     }
   }, [autoFocus]);
 
-  // Convert current state to HH:mm format
-  const toValue = (h: string, m: string, p: 'AM' | 'PM'): string => {
+  // Convert current state to HH:mm format and notify parent
+  const notifyChange = (h: string, m: string, p: 'AM' | 'PM') => {
     let hours24 = parseInt(h) || 0;
 
     if (timeFormat === '12h') {
@@ -66,7 +40,8 @@ function TimeInput({ value, onChange, timeFormat, autoFocus, onKeyDown }: TimeIn
     }
 
     const mins = parseInt(m) || 0;
-    return `${hours24.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    const value = `${hours24.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+    onChange(value);
   };
 
   const handleHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,8 +56,7 @@ function TimeInput({ value, onChange, timeFormat, autoFocus, onKeyDown }: TimeIn
         minutesRef.current?.focus();
       }
 
-      isInternalChange.current = true;
-      onChange(toValue(val, minutes, period));
+      notifyChange(val, minutes, period);
     }
   };
 
@@ -91,27 +65,27 @@ function TimeInput({ value, onChange, timeFormat, autoFocus, onKeyDown }: TimeIn
 
     if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 59)) {
       setMinutes(val);
-      isInternalChange.current = true;
-      onChange(toValue(hours, val, period));
+      notifyChange(hours, val, period);
     }
   };
 
   const handlePeriodToggle = () => {
     const newPeriod = period === 'AM' ? 'PM' : 'AM';
     setPeriod(newPeriod);
-    isInternalChange.current = true;
-    onChange(toValue(hours, minutes, newPeriod));
+    notifyChange(hours, minutes, newPeriod);
   };
 
   const handleHoursBlur = () => {
     if (hours && timeFormat === '24h') {
-      setHours(hours.padStart(2, '0'));
+      const padded = hours.padStart(2, '0');
+      setHours(padded);
     }
   };
 
   const handleMinutesBlur = () => {
     if (minutes) {
-      setMinutes(minutes.padStart(2, '0'));
+      const padded = minutes.padStart(2, '0');
+      setMinutes(padded);
     }
   };
 
