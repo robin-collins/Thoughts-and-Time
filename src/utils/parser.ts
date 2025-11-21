@@ -63,6 +63,7 @@ customChrono.parsers.push({
 });
 
 // Add parser for 24-hour time format like "at 13:55" or "at 09:30"
+// Uses assign() to mark hour/minute as certain (not implied)
 customChrono.parsers.push({
   pattern: () => /\bat\s+(\d{1,2}):(\d{2})\b/i,
   extract: (context, match) => {
@@ -72,13 +73,13 @@ customChrono.parsers.push({
     // Validate 24h format
     if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
       const now = context.refDate || new Date();
-      return {
-        year: now.getFullYear(),
-        month: now.getMonth() + 1,
-        day: now.getDate(),
-        hour: hour,
-        minute: minute,
-      };
+      const component = context.createParsingComponents();
+      component.assign('year', now.getFullYear());
+      component.assign('month', now.getMonth() + 1);
+      component.assign('day', now.getDate());
+      component.assign('hour', hour);
+      component.assign('minute', minute);
+      return component;
     }
     return null;
   }
