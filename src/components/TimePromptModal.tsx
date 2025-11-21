@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import TimeInput from './TimeInput';
 
 interface TimePromptModalProps {
@@ -18,19 +18,41 @@ function TimePromptModal({ isOpen, isEvent, content, timeFormat = '12h', onSubmi
   const [time, setTime] = useState('');
   const [endTime, setEndTime] = useState('');
 
+  // Use refs to track latest values for immediate access in handlers
+  const timeRef = useRef('');
+  const endTimeRef = useRef('');
+
   if (!isOpen) return null;
 
+  const handleTimeChange = (value: string) => {
+    setTime(value);
+    timeRef.current = value;
+  };
+
+  const handleEndTimeChange = (value: string) => {
+    setEndTime(value);
+    endTimeRef.current = value;
+  };
+
   const handleSubmit = () => {
-    if (!time) return;
-    if (isEvent && !endTime) return;
-    onSubmit(time, isEvent ? endTime : undefined);
+    // Use refs for immediate access to latest values
+    const currentTime = timeRef.current;
+    const currentEndTime = endTimeRef.current;
+
+    if (!currentTime) return;
+    if (isEvent && !currentEndTime) return;
+    onSubmit(currentTime, isEvent ? currentEndTime : undefined);
     setTime('');
     setEndTime('');
+    timeRef.current = '';
+    endTimeRef.current = '';
   };
 
   const handleCancel = () => {
     setTime('');
     setEndTime('');
+    timeRef.current = '';
+    endTimeRef.current = '';
     onCancel();
   };
 
@@ -56,7 +78,7 @@ function TimePromptModal({ isOpen, isEvent, content, timeFormat = '12h', onSubmi
               <label className="block text-xs font-mono text-text-secondary mb-4">Start time</label>
               <TimeInput
                 value={time}
-                onChange={setTime}
+                onChange={handleTimeChange}
                 timeFormat={timeFormat}
                 autoFocus
                 onKeyDown={handleKeyDown}
@@ -66,7 +88,7 @@ function TimePromptModal({ isOpen, isEvent, content, timeFormat = '12h', onSubmi
               <label className="block text-xs font-mono text-text-secondary mb-4">End time</label>
               <TimeInput
                 value={endTime}
-                onChange={setEndTime}
+                onChange={handleEndTimeChange}
                 timeFormat={timeFormat}
                 onKeyDown={handleKeyDown}
               />
@@ -76,7 +98,7 @@ function TimePromptModal({ isOpen, isEvent, content, timeFormat = '12h', onSubmi
           <div className="mb-16">
             <TimeInput
               value={time}
-              onChange={setTime}
+              onChange={handleTimeChange}
               timeFormat={timeFormat}
               autoFocus
               onKeyDown={handleKeyDown}
