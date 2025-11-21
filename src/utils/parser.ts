@@ -62,6 +62,28 @@ customChrono.parsers.push({
   }
 });
 
+// Add parser for 24-hour time format like "at 13:55" or "at 09:30"
+customChrono.parsers.push({
+  pattern: () => /\bat\s+(\d{1,2}):(\d{2})\b/i,
+  extract: (context, match) => {
+    const hour = parseInt(match[1]);
+    const minute = parseInt(match[2]);
+
+    // Validate 24h format
+    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+      const now = context.refDate || new Date();
+      return {
+        year: now.getFullYear(),
+        month: now.getMonth() + 1,
+        day: now.getDate(),
+        hour: hour,
+        minute: minute,
+      };
+    }
+    return null;
+  }
+});
+
 // Custom refiner for "between X and Y" to properly parse both start and end times
 customChrono.refiners.push({
   refine: (context, results) => {
