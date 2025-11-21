@@ -153,10 +153,7 @@
   /* Highlight flash animation for jump-to-source */
   @keyframes highlightFlash {
     0% {
-      background-color: transparent;
-    }
-    20% {
-      background-color: var(--color-hover-bg);
+      background-color: rgba(255, 255, 0, 0.3);
     }
     100% {
       background-color: transparent;
@@ -166,6 +163,7 @@
   .highlight-flash {
     animation: highlightFlash 2s ease-out;
     border-radius: 4px;
+    padding: 4px;
   }
 
   /* Focus indicators for accessibility */
