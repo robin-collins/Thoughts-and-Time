@@ -61,12 +61,11 @@ function TimeInput({ onChange, timeFormat, autoFocus, onKeyDown }: TimeInputProp
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      // Ensure we have a valid time before allowing submit
-      const parsed = parseTime(inputValue);
-      if (parsed) {
-        onChange(parsed);
-      }
+    // Always sync the current value before passing key event to parent
+    // This ensures the parent has the latest value for any action (Enter, Tab, etc.)
+    const parsed = parseTime(inputValue);
+    if (parsed) {
+      onChange(parsed);
     }
     // Pass to parent handler
     onKeyDown?.(e);
