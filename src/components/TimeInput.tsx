@@ -21,6 +21,21 @@ function TimeInput({ onChange, timeFormat, autoFocus, onKeyDown }: TimeInputProp
     }
   }, [autoFocus]);
 
+  const parseTime = (val: string): string | null => {
+    const match = val.match(/^(\d{1,2}):?(\d{0,2})$/);
+    if (match) {
+      const hours = parseInt(match[1]) || 0;
+      const minutes = parseInt(match[2]) || 0;
+
+      const maxHours = timeFormat === '12h' ? 12 : 23;
+      if (hours <= maxHours && minutes <= 59) {
+        const h24 = timeFormat === '12h' ? (hours % 12) : hours;
+        return `${h24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      }
+    }
+    return null;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;
 
@@ -39,19 +54,22 @@ function TimeInput({ onChange, timeFormat, autoFocus, onKeyDown }: TimeInputProp
 
     setInputValue(val);
 
-    // Parse and validate for onChange
-    const match = val.match(/^(\d{1,2}):?(\d{0,2})$/);
-    if (match) {
-      const hours = parseInt(match[1]) || 0;
-      const minutes = parseInt(match[2]) || 0;
+    const parsed = parseTime(val);
+    if (parsed) {
+      onChange(parsed);
+    }
+  };
 
-      // Validate hours based on format
-      const maxHours = timeFormat === '12h' ? 12 : 23;
-      if (hours <= maxHours && minutes <= 59) {
-        const h24 = timeFormat === '12h' ? (hours % 12) : hours;
-        onChange(`${h24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      // Ensure we have a valid time before allowing submit
+      const parsed = parseTime(inputValue);
+      if (parsed) {
+        onChange(parsed);
       }
     }
+    // Pass to parent handler
+    onKeyDown?.(e);
   };
 
   const placeholder = timeFormat === '24h' ? '00:00' : '12:00';
@@ -64,9 +82,9 @@ function TimeInput({ onChange, timeFormat, autoFocus, onKeyDown }: TimeInputProp
         inputMode="numeric"
         value={inputValue}
         onChange={handleChange}
-        onKeyDown={onKeyDown}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="w-[5ch] px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm text-center outline-none placeholder-text-secondary"
+        className="w-[6ch] px-12 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm text-center outline-none placeholder-text-secondary"
       />
       {timeFormat === '12h' && (
         <select
