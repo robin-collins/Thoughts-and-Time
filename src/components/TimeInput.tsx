@@ -14,6 +14,7 @@ interface TimeInputProps {
 function TimeInput({ onChange, timeFormat, autoFocus, onKeyDown }: TimeInputProps) {
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const valueRef = useRef(''); // Track value for immediate access in handlers
 
   useEffect(() => {
     if (autoFocus && inputRef.current) {
@@ -53,6 +54,7 @@ function TimeInput({ onChange, timeFormat, autoFocus, onKeyDown }: TimeInputProp
     }
 
     setInputValue(val);
+    valueRef.current = val; // Update ref immediately
 
     const parsed = parseTime(val);
     if (parsed) {
@@ -62,8 +64,8 @@ function TimeInput({ onChange, timeFormat, autoFocus, onKeyDown }: TimeInputProp
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Always sync the current value before passing key event to parent
-    // This ensures the parent has the latest value for any action (Enter, Tab, etc.)
-    const parsed = parseTime(inputValue);
+    // Use valueRef for immediate access (state may not have updated yet)
+    const parsed = parseTime(valueRef.current);
     if (parsed) {
       onChange(parsed);
     }
@@ -90,7 +92,7 @@ function TimeInput({ onChange, timeFormat, autoFocus, onKeyDown }: TimeInputProp
           className="px-8 py-8 bg-hover-bg border border-border-subtle rounded-sm font-mono text-sm"
           onChange={(e) => {
             // Re-parse with new period
-            const match = inputValue.match(/^(\d{1,2}):?(\d{0,2})$/);
+            const match = valueRef.current.match(/^(\d{1,2}):?(\d{0,2})$/);
             if (match) {
               let hours = parseInt(match[1]) || 0;
               const minutes = parseInt(match[2]) || 0;
