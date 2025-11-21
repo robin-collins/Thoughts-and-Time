@@ -384,7 +384,26 @@ export function detectRecurrencePattern(content: string): RecurrencePattern | nu
 export function parseDateTime(content: string): { date: Date | null; hasTime: boolean; refText: string; endDate?: Date | null } {
   const results = customChrono.parse(content);
 
+  // Check for 24h time pattern "at HH:MM" that chrono might miss entirely
+  const time24Match = content.match(/\bat\s+(\d{1,2}):(\d{2})\b/i);
+  let has24hTime = false;
+  if (time24Match) {
+    const hour = parseInt(time24Match[1]);
+    const minute = parseInt(time24Match[2]);
+    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+      has24hTime = true;
+    }
+  }
+
   if (results.length === 0) {
+    // Even with no chrono results, if we found 24h time pattern, create a date for today
+    if (has24hTime) {
+      const now = new Date();
+      const hour = parseInt(time24Match![1]);
+      const minute = parseInt(time24Match![2]);
+      now.setHours(hour, minute, 0, 0);
+      return { date: now, hasTime: true, refText: time24Match![0] };
+    }
     return { date: null, hasTime: false, refText: '' };
   }
 
@@ -394,16 +413,9 @@ export function parseDateTime(content: string): { date: Date | null; hasTime: bo
   // Check if time component was specified
   let hasTime = result.start.isCertain('hour') && result.start.isCertain('minute');
 
-  // Fallback: check for 24h time pattern "at HH:MM" that chrono might not mark as certain
-  if (!hasTime) {
-    const time24Match = content.match(/\bat\s+(\d{1,2}):(\d{2})\b/i);
-    if (time24Match) {
-      const hour = parseInt(time24Match[1]);
-      const minute = parseInt(time24Match[2]);
-      if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
-        hasTime = true;
-      }
-    }
+  // Fallback: use 24h time pattern if chrono didn't mark time as certain
+  if (!hasTime && has24hTime) {
+    hasTime = true;
   }
 
   // Check for end time (for events with duration like "2-4pm")
