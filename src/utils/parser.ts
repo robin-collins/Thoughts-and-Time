@@ -392,7 +392,19 @@ export function parseDateTime(content: string): { date: Date | null; hasTime: bo
   const date = result.start.date();
 
   // Check if time component was specified
-  const hasTime = result.start.isCertain('hour') && result.start.isCertain('minute');
+  let hasTime = result.start.isCertain('hour') && result.start.isCertain('minute');
+
+  // Fallback: check for 24h time pattern "at HH:MM" that chrono might not mark as certain
+  if (!hasTime) {
+    const time24Match = content.match(/\bat\s+(\d{1,2}):(\d{2})\b/i);
+    if (time24Match) {
+      const hour = parseInt(time24Match[1]);
+      const minute = parseInt(time24Match[2]);
+      if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+        hasTime = true;
+      }
+    }
+  }
 
   // Check for end time (for events with duration like "2-4pm")
   const endDate = result.end ? result.end.date() : null;
