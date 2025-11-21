@@ -396,11 +396,10 @@ export function parseInput(input: string): ParsedInput {
   }
 
   // Determine if we need to prompt for time
-  // For todos and events with a date but no specific time, we'll prompt
+  // For todos and events without a date OR without a specific time, we'll prompt
   const needsTimePrompt =
     (type === 'todo' || type === 'event') &&
-    scheduledTime !== null &&
-    !hasTime;
+    (scheduledTime === null || !hasTime);
 
   // For all-day events, set to midnight-to-midnight
   if (type === 'event' && scheduledTime && !hasTime) {
