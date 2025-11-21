@@ -24,6 +24,9 @@ function App() {
 
   // Handle jump to source from Time pane
   const handleJumpToSource = (item: Item) => {
+    console.log('Jump to source clicked:', item.id, item.createdDate);
+    console.log('ThoughtsPane ref:', thoughtsPaneRef.current);
+
     // Scroll ThoughtsPane to item's creation date
     thoughtsPaneRef.current?.scrollToDate(item.createdDate);
 
