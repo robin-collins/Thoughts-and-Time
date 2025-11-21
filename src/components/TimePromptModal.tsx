@@ -57,10 +57,33 @@ function TimePromptModal({ isOpen, isEvent, content, timeFormat = '12h', onSubmi
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSubmit();
-    } else if (e.key === 'Escape') {
+    if (e.key === 'Escape') {
       handleCancel();
+    }
+  };
+
+  // Direct submit handlers that receive the value immediately
+  const handleTimeEnter = (value: string) => {
+    timeRef.current = value;
+    setTime(value);
+    if (!isEvent) {
+      // For non-events, submit immediately
+      onSubmit(value);
+      setTime('');
+      timeRef.current = '';
+    }
+  };
+
+  const handleEndTimeEnter = (value: string) => {
+    endTimeRef.current = value;
+    setEndTime(value);
+    // For events, submit when we have both times
+    if (timeRef.current) {
+      onSubmit(timeRef.current, value);
+      setTime('');
+      setEndTime('');
+      timeRef.current = '';
+      endTimeRef.current = '';
     }
   };
 
@@ -82,6 +105,7 @@ function TimePromptModal({ isOpen, isEvent, content, timeFormat = '12h', onSubmi
                 timeFormat={timeFormat}
                 autoFocus
                 onKeyDown={handleKeyDown}
+                onEnterWithValue={handleTimeEnter}
               />
             </div>
             <div>
@@ -91,6 +115,7 @@ function TimePromptModal({ isOpen, isEvent, content, timeFormat = '12h', onSubmi
                 onChange={handleEndTimeChange}
                 timeFormat={timeFormat}
                 onKeyDown={handleKeyDown}
+                onEnterWithValue={handleEndTimeEnter}
               />
             </div>
           </div>
@@ -102,6 +127,7 @@ function TimePromptModal({ isOpen, isEvent, content, timeFormat = '12h', onSubmi
               timeFormat={timeFormat}
               autoFocus
               onKeyDown={handleKeyDown}
+              onEnterWithValue={handleTimeEnter}
             />
           </div>
         )}

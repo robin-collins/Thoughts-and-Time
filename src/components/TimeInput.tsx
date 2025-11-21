@@ -6,12 +6,13 @@ interface TimeInputProps {
   timeFormat: '12h' | '24h';
   autoFocus?: boolean;
   onKeyDown?: (e: React.KeyboardEvent) => void;
+  onEnterWithValue?: (value: string) => void;
 }
 
 /**
  * Custom time input that respects the app's time format setting.
  */
-function TimeInput({ onChange, timeFormat, autoFocus, onKeyDown }: TimeInputProps) {
+function TimeInput({ onChange, timeFormat, autoFocus, onKeyDown, onEnterWithValue }: TimeInputProps) {
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef(''); // Track value for immediate access in handlers
@@ -63,14 +64,16 @@ function TimeInput({ onChange, timeFormat, autoFocus, onKeyDown }: TimeInputProp
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Only sync on Enter to avoid duplicate onChange calls
     if (e.key === 'Enter') {
       const parsed = parseTime(valueRef.current);
       if (parsed) {
-        onChange(parsed);
+        // Call onEnterWithValue with the parsed value directly
+        // This bypasses any ref timing issues
+        onEnterWithValue?.(parsed);
+        return; // Don't call onKeyDown for Enter - we handled it
       }
     }
-    // Pass to parent handler
+    // Pass other key events to parent handler
     onKeyDown?.(e);
   };
 
