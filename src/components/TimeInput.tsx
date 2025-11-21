@@ -16,12 +16,19 @@ function TimeInput({ value, onChange, timeFormat, autoFocus, onKeyDown }: TimeIn
   const [hours, setHours] = useState('');
   const [minutes, setMinutes] = useState('');
   const [period, setPeriod] = useState<'AM' | 'PM'>('AM');
+  const isInternalChange = useRef(false);
 
   const hoursRef = useRef<HTMLInputElement>(null);
   const minutesRef = useRef<HTMLInputElement>(null);
 
-  // Parse incoming value (HH:mm format)
+  // Parse incoming value (HH:mm format) - only on external changes
   useEffect(() => {
+    // Skip if this was triggered by our own onChange
+    if (isInternalChange.current) {
+      isInternalChange.current = false;
+      return;
+    }
+
     if (value) {
       const [h, m] = value.split(':').map(Number);
       setMinutes(m.toString().padStart(2, '0'));
@@ -33,6 +40,9 @@ function TimeInput({ value, onChange, timeFormat, autoFocus, onKeyDown }: TimeIn
       } else {
         setHours(h.toString().padStart(2, '0'));
       }
+    } else {
+      setHours('');
+      setMinutes('');
     }
   }, [value, timeFormat]);
 
@@ -71,6 +81,7 @@ function TimeInput({ value, onChange, timeFormat, autoFocus, onKeyDown }: TimeIn
         minutesRef.current?.focus();
       }
 
+      isInternalChange.current = true;
       onChange(toValue(val, minutes, period));
     }
   };
@@ -80,6 +91,7 @@ function TimeInput({ value, onChange, timeFormat, autoFocus, onKeyDown }: TimeIn
 
     if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 59)) {
       setMinutes(val);
+      isInternalChange.current = true;
       onChange(toValue(hours, val, period));
     }
   };
@@ -87,15 +99,13 @@ function TimeInput({ value, onChange, timeFormat, autoFocus, onKeyDown }: TimeIn
   const handlePeriodToggle = () => {
     const newPeriod = period === 'AM' ? 'PM' : 'AM';
     setPeriod(newPeriod);
+    isInternalChange.current = true;
     onChange(toValue(hours, minutes, newPeriod));
   };
 
   const handleHoursBlur = () => {
-    if (hours) {
-      const padded = timeFormat === '24h'
-        ? hours.padStart(2, '0')
-        : hours;
-      setHours(padded);
+    if (hours && timeFormat === '24h') {
+      setHours(hours.padStart(2, '0'));
     }
   };
 
