@@ -61,16 +61,17 @@ function DailyReview({ searchQuery = '' }: DailyReviewProps) {
   // Helper function to get subtasks for a todo
   const getSubtasks = (todoId: string): DailyReviewItem[] => {
     const todo = items.find((i) => i.id === todoId) as Todo | undefined;
-    if (!todo || !todo.subtasks || todo.subtasks.length === 0) return [];
+    if (!todo || !todo.children || todo.children.length === 0) return [];
 
-    return todo.subtasks
-      .map((subtaskId) => {
-        const subtask = items.find((i) => i.id === subtaskId) as Todo | undefined;
-        if (!subtask || subtask.completedAt || subtask.cancelledAt) return null;
+    return todo.children
+      .map((childId: string) => {
+        const child = items.find((i) => i.id === childId);
+        // Only include todo children that are incomplete
+        if (!child || child.type !== 'todo' || child.completedAt || child.cancelledAt) return null;
 
-        const createdDate = new Date(subtask.createdDate);
+        const createdDate = new Date(child.createdDate);
         const waitingDays = differenceInDays(now, createdDate);
-        return { item: subtask, waitingDays };
+        return { item: child as Todo, waitingDays };
       })
       .filter((item): item is DailyReviewItem => item !== null);
   };

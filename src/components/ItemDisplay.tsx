@@ -1,6 +1,6 @@
 import { useState, memo } from 'react';
 import { format } from 'date-fns';
-import { Item, Todo, Routine, Note, Event } from '../types';
+import { Item, Todo, Routine, Event } from '../types';
 import { useStore } from '../store/useStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { parseInput } from '../utils/parser';
@@ -194,17 +194,12 @@ function ItemDisplay({
   };
 
   const handleDelete = () => {
-    const subItemIds =
-      item.type === 'note'
-        ? (item as Note).subItems
-        : item.type === 'todo'
-          ? (item as Todo).subtasks
-          : [];
+    const childIds = 'children' in item ? item.children : [];
 
-    const hasChildren = subItemIds.length > 0;
+    const hasChildren = childIds.length > 0;
     let message = 'Are you sure you want to delete this item?';
     if (hasChildren) {
-      message = `This will also delete ${subItemIds.length} sub-item${subItemIds.length > 1 ? 's' : ''}. Continue?`;
+      message = `This will also delete ${childIds.length} sub-item${childIds.length > 1 ? 's' : ''}. Continue?`;
     }
 
     setConfirmDelete({ isOpen: true, message, hasChildren });
@@ -218,14 +213,11 @@ function ItemDisplay({
 
   const isCompleted = item.type === 'todo' && (item as Todo).completedAt;
 
-  const subItemIds =
-    item.type === 'note'
-      ? (item as Note).subItems
-      : item.type === 'todo'
-        ? (item as Todo).subtasks
-        : [];
+  const childIds = 'children' in item ? item.children : [];
 
-  const subItems = subItemIds.map((id) => items.find((i) => i.id === id)).filter(Boolean) as Item[];
+  const subItems = childIds
+    .map((id: string) => items.find((i) => i.id === id))
+    .filter(Boolean) as Item[];
 
   const indentPx = depth * 16;
 

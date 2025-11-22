@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { format } from 'date-fns';
-import { Item, Todo, Event, Routine, Note } from '../types';
-import { parseInput } from '../utils/parser';
+import { Item, Todo, Event, Routine, Note, ParsedLine } from '../types';
+import { parseInput, parseMultiLine } from '../utils/parser';
 import { useHistory } from './useHistory';
 
 /**
@@ -19,12 +19,19 @@ interface AppState {
 
   /**
    * Add a new item by parsing user input.
-   * @param input - Raw user input with optional prefix (t, e, r, *)
+   * @param input - Raw user input with prefix (t, e, r, n)
    * @param parentId - Optional parent item ID for nesting
    * @param depthLevel - Nesting depth (0=top, 1=sub, 2=sub-sub)
    * @returns The generated item ID
    */
   addItem: (input: string, parentId?: string | null, depthLevel?: number) => string;
+
+  /**
+   * Add multiple items from multi-line input with hierarchy.
+   * @param input - Multi-line input with prefixes and Tab indentation
+   * @returns Object with created item IDs and any errors
+   */
+  addItems: (input: string) => { ids: string[]; errors: string[]; needsTimePrompt: ParsedLine[] };
 
   /**
    * Add a pre-constructed item directly (used by undo/redo).
@@ -151,7 +158,7 @@ export const useStore = create<AppState>()(
               parentId,
               parentType,
               depthLevel,
-              subtasks: [],
+              children: [],
               embeddedItems: parsed.embeddedNotes,
               completionLinkId: null,
             } as Todo;
@@ -171,6 +178,7 @@ export const useStore = create<AppState>()(
               parentId,
               parentType,
               depthLevel,
+              children: [],
             } as Event;
             break;
 
@@ -184,9 +192,10 @@ export const useStore = create<AppState>()(
               streak: 0,
               lastCompleted: null,
               embeddedItems: parsed.embeddedNotes,
-              parentId,
-              parentType,
-              depthLevel,
+              parentId: null,
+              parentType: null,
+              depthLevel: 0,
+              children: [],
             } as Routine;
             break;
 
@@ -196,7 +205,7 @@ export const useStore = create<AppState>()(
               ...baseItem,
               type: 'note',
               linkPreviews: [],
-              subItems: [],
+              children: [],
               parentId,
               parentType,
               depthLevel,
@@ -205,16 +214,15 @@ export const useStore = create<AppState>()(
             break;
         }
 
-        // Update parent item to include this sub-item
+        // Update parent item to include this child
         if (parentId) {
           set((state) => ({
             items: [
               ...state.items.map((item) => {
                 if (item.id === parentId) {
-                  if (item.type === 'note') {
-                    return { ...item, subItems: [...item.subItems, newId] };
-                  } else if (item.type === 'todo') {
-                    return { ...item, subtasks: [...item.subtasks, newId] };
+                  // All types now use 'children' field
+                  if ('children' in item) {
+                    return { ...item, children: [...item.children, newId] };
                   }
                 }
                 return item;
@@ -229,6 +237,165 @@ export const useStore = create<AppState>()(
         }
 
         return newId;
+      },
+
+      addItems: (input: string) => {
+        const { lines, errors } = parseMultiLine(input);
+
+        if (errors.length > 0 || lines.length === 0) {
+          return { ids: [], errors, needsTimePrompt: [] };
+        }
+
+        const now = new Date();
+        const createdDate = format(now, 'yyyy-MM-dd');
+        const ids: string[] = [];
+        const newItems: Item[] = [];
+        const needsTimePrompt: ParsedLine[] = [];
+
+        // Track parent at each level
+        const parentStack: { id: string; level: number }[] = [];
+
+        for (const line of lines) {
+          const newId = generateId();
+          ids.push(newId);
+
+          // Find parent based on level
+          let parentId: string | null = null;
+          let parentType: Item['type'] | null = null;
+
+          if (line.level > 0) {
+            // Pop items from stack until we find one at the correct parent level
+            while (
+              parentStack.length > 0 &&
+              parentStack[parentStack.length - 1].level >= line.level
+            ) {
+              parentStack.pop();
+            }
+            if (parentStack.length > 0) {
+              const parentInfo = parentStack[parentStack.length - 1];
+              parentId = parentInfo.id;
+              const parentItem = newItems.find((i) => i.id === parentId);
+              parentType = parentItem?.type || null;
+            }
+          }
+
+          // Check if this item needs time prompt
+          if (line.needsTimePrompt) {
+            needsTimePrompt.push(line);
+          }
+
+          const baseItem = {
+            id: newId,
+            userId: 'user-1',
+            content: line.content,
+            createdAt: now,
+            createdDate,
+            updatedAt: now,
+            completedAt: null,
+            cancelledAt: null,
+          };
+
+          let newItem: Item;
+
+          switch (line.type) {
+            case 'todo':
+              newItem = {
+                ...baseItem,
+                type: 'todo',
+                scheduledTime: line.scheduledTime,
+                hasTime: line.hasTime,
+                parentId,
+                parentType: parentType as 'todo' | 'note' | 'event' | null,
+                depthLevel: line.level,
+                children: [],
+                embeddedItems: line.embeddedNotes,
+                completionLinkId: null,
+              } as Todo;
+              break;
+
+            case 'event':
+              newItem = {
+                ...baseItem,
+                type: 'event',
+                startTime: line.scheduledTime || now,
+                endTime: line.endTime || line.scheduledTime || now,
+                hasTime: line.hasTime,
+                isAllDay: !line.hasTime,
+                splitStartId: null,
+                splitEndId: null,
+                embeddedItems: line.embeddedNotes,
+                parentId,
+                parentType: parentType as 'note' | null,
+                depthLevel: line.level,
+                children: [],
+              } as Event;
+              break;
+
+            case 'routine':
+              newItem = {
+                ...baseItem,
+                type: 'routine',
+                recurrencePattern: line.recurrencePattern || { frequency: 'daily', interval: 1 },
+                scheduledTime: line.scheduledTime ? format(line.scheduledTime, 'HH:mm') : null,
+                hasTime: line.hasTime,
+                streak: 0,
+                lastCompleted: null,
+                embeddedItems: line.embeddedNotes,
+                parentId: null,
+                parentType: null,
+                depthLevel: 0,
+                children: [],
+              } as Routine;
+              break;
+
+            case 'note':
+            default:
+              newItem = {
+                ...baseItem,
+                type: 'note',
+                linkPreviews: [],
+                children: [],
+                parentId,
+                parentType: parentType as 'todo' | 'note' | 'event' | 'routine' | null,
+                depthLevel: line.level,
+                orderIndex: 0,
+              } as Note;
+              break;
+          }
+
+          newItems.push(newItem);
+
+          // Update parent's children array
+          if (parentId) {
+            const parentItem = newItems.find((i) => i.id === parentId);
+            if (parentItem && 'children' in parentItem) {
+              parentItem.children.push(newId);
+            }
+          }
+
+          // Add to parent stack for potential children
+          parentStack.push({ id: newId, level: line.level });
+        }
+
+        // Add all items to store
+        const { skipHistory } = get();
+
+        // Record history for all items
+        if (!skipHistory) {
+          for (const item of newItems) {
+            useHistory.getState().recordAction({
+              type: 'create',
+              timestamp: new Date(),
+              item,
+            });
+          }
+        }
+
+        set((state) => ({
+          items: [...state.items, ...newItems],
+        }));
+
+        return { ids, errors: [], needsTimePrompt };
       },
 
       addItemDirect: (item: Item) => {
@@ -298,12 +465,9 @@ export const useStore = create<AppState>()(
           const item = items.find((i) => i.id === itemId);
           if (!item) return;
 
-          if (item.type === 'todo' && item.subtasks.length > 0) {
-            item.subtasks.forEach((subtaskId) => collectDescendants(subtaskId));
-          }
-
-          if (item.type === 'note' && item.subItems.length > 0) {
-            item.subItems.forEach((subItemId) => collectDescendants(subItemId));
+          // All types now use 'children' field
+          if ('children' in item && item.children.length > 0) {
+            item.children.forEach((childId) => collectDescendants(childId));
           }
         };
 
@@ -335,17 +499,11 @@ export const useStore = create<AppState>()(
             items: state.items
               .filter((item) => !idsToDelete.has(item.id))
               .map((item) => {
-                // Clean up parent references
-                if (item.type === 'todo' && item.subtasks.length > 0) {
-                  const cleanedSubtasks = item.subtasks.filter((sid) => !idsToDelete.has(sid));
-                  if (cleanedSubtasks.length !== item.subtasks.length) {
-                    return { ...item, subtasks: cleanedSubtasks };
-                  }
-                }
-                if (item.type === 'note' && item.subItems.length > 0) {
-                  const cleanedSubItems = item.subItems.filter((sid) => !idsToDelete.has(sid));
-                  if (cleanedSubItems.length !== item.subItems.length) {
-                    return { ...item, subItems: cleanedSubItems };
+                // Clean up children references for all types
+                if ('children' in item && item.children.length > 0) {
+                  const cleanedChildren = item.children.filter((cid) => !idsToDelete.has(cid));
+                  if (cleanedChildren.length !== item.children.length) {
+                    return { ...item, children: cleanedChildren };
                   }
                 }
                 return item;
