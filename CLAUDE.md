@@ -174,4 +174,4 @@ npm run lint         # ESLint
 6. **localStorage persistence** - changes auto-persist via Zustand middleware
 7. **Error boundaries** - Each pane has its own error boundary for isolation
 8. **Accessibility** - App includes skip navigation link and ARIA labels
-9. **Test coverage** - 213 tests covering stores, hooks, and components
+9. **Test coverage** - 238 tests covering stores, hooks, and components

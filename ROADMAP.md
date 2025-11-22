@@ -44,7 +44,7 @@ This app enforces a strict scheduling philosophy: **every single task, event, an
 - [x] Error boundary with graceful error handling
 - [x] Keyboard shortcuts (Cmd/Ctrl+F, Escape, Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z)
 - [x] Accessibility improvements (ARIA labels, focus indicators)
-- [x] Comprehensive test suite (115 tests with Vitest)
+- [x] Comprehensive test suite (238 tests with Vitest)
 - [x] Undo/Redo system (tracks all actions with Cmd/Ctrl+Z/Shift+Z)
 - [x] Undo button in delete toasts
 - [x] Custom TimeInput component (replaces native browser picker)
@@ -749,7 +749,7 @@ domain: 13px, #6A6A6A
 - [x] Added comprehensive tests for `useHistory.ts` (14 tests)
 - [x] Added tests for `useFocusTrap.ts` (6 tests)
 - [x] Added tests for `useKeyboardShortcuts.ts` (17 tests)
-- [x] Total test count increased from 176 to 213 tests
+- [x] Total test count increased from 176 to 238 tests
 
 **Files Created:**
 
@@ -804,6 +804,30 @@ domain: 13px, #6A6A6A
 
 - `src/components/ItemDisplay.tsx`
 
+#### 6. Component Tests for Complex UI
+
+- [x] Added tests for `DailyReview` component (11 tests)
+- [x] Added tests for `ThoughtsPane` component (7 tests)
+- [x] Added tests for `TimePane` component (7 tests)
+- [x] Tests cover rendering, props, accessibility, interactions
+
+**Files Created:**
+
+- `src/components/DailyReview.test.tsx`
+- `src/components/ThoughtsPane.test.tsx`
+- `src/components/TimePane.test.tsx`
+
+#### 7. DailyReview Accessibility
+
+- [x] Added ARIA labels to action buttons (Reschedule, Complete, Cancel)
+- [x] Added semantic structure with `<section>` and heading
+- [x] Added `role="group"` for related action buttons
+- [x] Used `aria-hidden` on decorative icons
+
+**Files Modified:**
+
+- `src/components/DailyReview.tsx`
+
 ---
 
 ## Next Steps
@@ -816,7 +840,6 @@ domain: 13px, #6A6A6A
 ### Short Term (Next 2 Weeks)
 
 1. URL link previews for notes
-2. Component tests for complex UI (ThoughtsPane, TimePane, DailyReview)
 
 ### Medium Term (Next Month)
 
