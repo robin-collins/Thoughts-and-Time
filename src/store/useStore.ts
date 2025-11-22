@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { format } from 'date-fns';
 import { Item, Todo, Event, Routine, Note } from '../types';
-import { parseInput, hasExplicitNotePrefix } from '../utils/parser';
+import { parseInput } from '../utils/parser';
 import { useHistory } from './useHistory';
 
 /**
@@ -103,7 +103,7 @@ export const useStore = create<AppState>()(
         const newId = generateId();
 
         // Get parent item if exists
-        const parentItem = parentId ? get().items.find(i => i.id === parentId) : null;
+        const parentItem = parentId ? get().items.find((i) => i.id === parentId) : null;
         const parentType = parentItem?.type as 'todo' | 'note' | null;
 
         // VALIDATION: Depth constraints
@@ -116,23 +116,14 @@ export const useStore = create<AppState>()(
           throw new Error('Note sub-items: maximum depth is 2 levels');
         }
 
-        // RULE: If parent is todo, child defaults to todo UNLESS explicit note prefix (* or n)
-        // RULE: If parent is note, child can be ANY type (via prefix: * t e r)
-        let itemType = parsed.type;
+        // RULE: Sub-items follow the same parsing rules as top-level items
+        // No prefix = note (default), t = todo, e = event, r = routine
+        // VALIDATION: Todo sub-items can only be todos or notes
+        const itemType = parsed.type;
         if (parentType === 'todo') {
-          // Check if user explicitly wanted a note (used * or n prefix)
-          const explicitNote = hasExplicitNotePrefix(input);
-
           if (parsed.type !== 'todo' && parsed.type !== 'note') {
             console.error('Todo subtasks can only be todos or notes');
             throw new Error('Todo subtasks can only be todos or notes');
-          }
-
-          // If explicit note prefix, keep as note; otherwise default to todo
-          if (explicitNote) {
-            itemType = 'note';
-          } else {
-            itemType = 'todo';
           }
         }
         // For notes: itemType remains as parsed.type (any type allowed via prefix)
@@ -218,7 +209,7 @@ export const useStore = create<AppState>()(
         if (parentId) {
           set((state) => ({
             items: [
-              ...state.items.map(item => {
+              ...state.items.map((item) => {
                 if (item.id === parentId) {
                   if (item.type === 'note') {
                     return { ...item, subItems: [...item.subItems, newId] };
@@ -228,7 +219,7 @@ export const useStore = create<AppState>()(
                 }
                 return item;
               }),
-              newItem
+              newItem,
             ],
           }));
         } else {
@@ -269,10 +260,15 @@ export const useStore = create<AppState>()(
 
       updateItem: (id: string, updates: Partial<Item>) => {
         const { skipHistory, items } = get();
-        const oldItem = items.find(i => i.id === id);
+        const oldItem = items.find((i) => i.id === id);
 
         // Record history before updating (only for content changes, not internal updates)
-        if (!skipHistory && oldItem && updates.content !== undefined && updates.content !== oldItem.content) {
+        if (
+          !skipHistory &&
+          oldItem &&
+          updates.content !== undefined &&
+          updates.content !== oldItem.content
+        ) {
           useHistory.getState().recordAction({
             type: 'edit',
             timestamp: new Date(),
@@ -284,7 +280,7 @@ export const useStore = create<AppState>()(
 
         set((state) => ({
           items: state.items.map((item) =>
-            item.id === id ? { ...item, ...updates, updatedAt: new Date() } as Item : item
+            item.id === id ? ({ ...item, ...updates, updatedAt: new Date() } as Item) : item
           ),
         }));
       },
@@ -293,21 +289,21 @@ export const useStore = create<AppState>()(
         const { skipHistory, items } = get();
 
         // Collect all items that will be deleted (for undo)
-        const itemToDelete = items.find(i => i.id === id);
+        const itemToDelete = items.find((i) => i.id === id);
         if (!itemToDelete) return;
 
         const idsToDelete = new Set<string>();
         const collectDescendants = (itemId: string) => {
           idsToDelete.add(itemId);
-          const item = items.find(i => i.id === itemId);
+          const item = items.find((i) => i.id === itemId);
           if (!item) return;
 
           if (item.type === 'todo' && item.subtasks.length > 0) {
-            item.subtasks.forEach(subtaskId => collectDescendants(subtaskId));
+            item.subtasks.forEach((subtaskId) => collectDescendants(subtaskId));
           }
 
           if (item.type === 'note' && item.subItems.length > 0) {
-            item.subItems.forEach(subItemId => collectDescendants(subItemId));
+            item.subItems.forEach((subItemId) => collectDescendants(subItemId));
           }
         };
 
@@ -337,17 +333,17 @@ export const useStore = create<AppState>()(
           // Remove all collected items and clean up parent references
           return {
             items: state.items
-              .filter(item => !idsToDelete.has(item.id))
-              .map(item => {
+              .filter((item) => !idsToDelete.has(item.id))
+              .map((item) => {
                 // Clean up parent references
                 if (item.type === 'todo' && item.subtasks.length > 0) {
-                  const cleanedSubtasks = item.subtasks.filter(sid => !idsToDelete.has(sid));
+                  const cleanedSubtasks = item.subtasks.filter((sid) => !idsToDelete.has(sid));
                   if (cleanedSubtasks.length !== item.subtasks.length) {
                     return { ...item, subtasks: cleanedSubtasks };
                   }
                 }
                 if (item.type === 'note' && item.subItems.length > 0) {
-                  const cleanedSubItems = item.subItems.filter(sid => !idsToDelete.has(sid));
+                  const cleanedSubItems = item.subItems.filter((sid) => !idsToDelete.has(sid));
                   if (cleanedSubItems.length !== item.subItems.length) {
                     return { ...item, subItems: cleanedSubItems };
                   }
@@ -360,7 +356,7 @@ export const useStore = create<AppState>()(
 
       toggleTodoComplete: (id: string) => {
         const { skipHistory, items } = get();
-        const todo = items.find(i => i.id === id && i.type === 'todo') as Todo | undefined;
+        const todo = items.find((i) => i.id === id && i.type === 'todo') as Todo | undefined;
         if (!todo) return;
 
         const wasCompleted = !!todo.completedAt;
