@@ -261,11 +261,11 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
         const lineContent = value.substring(lineStart);
 
         // Find position after prefix (symbol + space or prefix + space)
-        const prefixMatch = lineContent.match(/^[□☑↹⇤⇥↻↝■\-*tern] /);
+        const prefixMatch = lineContent.match(/^(\S) /);
         if (prefixMatch) {
           const afterPrefix = lineStart + prefixMatch[0].length;
           // Count existing tabs to limit depth
-          const existingTabs = (lineContent.match(/^[□☑↹⇤⇥↻↝■\-*tern] (\t*)/)?.[1] || '').length;
+          const existingTabs = (lineContent.match(/^\S (\t*)/)?.[1] || '').length;
           if (existingTabs < 2) {
             const newValue = value.substring(0, afterPrefix) + '\t' + value.substring(afterPrefix);
             setInput(newValue);
@@ -288,7 +288,7 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
         const lineContent = value.substring(lineStart);
 
         // Find position after prefix (symbol + space or prefix + space)
-        const prefixMatch = lineContent.match(/^[□☑↹⇤⇥↻↝■\-*tern] /);
+        const prefixMatch = lineContent.match(/^(\S) /);
         if (prefixMatch) {
           const afterPrefix = lineStart + prefixMatch[0].length;
           // Check if there's a tab after the prefix
