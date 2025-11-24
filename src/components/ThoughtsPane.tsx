@@ -252,7 +252,7 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
         }
       }
 
-      // Tab: insert tab character for indentation (at start of line)
+      // Tab: cycle through indent levels (at start of line)
       if (e.key === 'Tab' && !e.shiftKey) {
         e.preventDefault();
 
@@ -277,17 +277,27 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
           const prevLineContent = value.substring(prevLineStart, prevLineEnd);
           const prevTabs = (prevLineContent.match(/^(\t*)/)?.[1] || '').length;
 
-          // Can only indent 1 level deeper than previous line
-          if (currentTabs <= prevTabs) {
-            // Insert tab at the beginning of the line
-            const newValue = value.substring(0, lineStart) + '\t' + value.substring(lineStart);
-            setInput(newValue);
+          // Max allowed indent is 1 level deeper than previous line
+          const maxTabs = prevTabs + 1;
 
-            // Move cursor forward 1 position
-            setTimeout(() => {
-              textarea.selectionStart = textarea.selectionEnd = selectionStart + 1;
-            }, 0);
+          let newValue: string;
+          let cursorDelta: number;
+
+          if (currentTabs < maxTabs) {
+            // Increment indent level
+            newValue = value.substring(0, lineStart) + '\t' + value.substring(lineStart);
+            cursorDelta = 1;
+          } else {
+            // Cycle back to 0 - remove all tabs
+            newValue = value.substring(0, lineStart) + value.substring(lineStart + currentTabs);
+            cursorDelta = -currentTabs;
           }
+
+          setInput(newValue);
+
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = selectionStart + cursorDelta;
+          }, 0);
         }
         return;
       }
