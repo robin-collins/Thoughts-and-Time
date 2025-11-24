@@ -252,7 +252,7 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
         }
       }
 
-      // Tab: insert tab character for indentation (after prefix)
+      // Tab: insert tab character for indentation (at start of line)
       if (e.key === 'Tab' && !e.shiftKey) {
         e.preventDefault();
 
@@ -260,14 +260,14 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
         const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
         const lineContent = value.substring(lineStart);
 
-        // Find position after prefix (symbol + space or prefix + space)
+        // Check if line has a prefix (symbol + space)
         const prefixMatch = lineContent.match(/^(\S) /);
         if (prefixMatch) {
-          const afterPrefix = lineStart + prefixMatch[0].length;
-          // Count existing tabs to limit depth
-          const existingTabs = (lineContent.match(/^\S (\t*)/)?.[1] || '').length;
+          // Count existing tabs at start of line to limit depth
+          const existingTabs = (lineContent.match(/^(\t*)/)?.[1] || '').length;
           if (existingTabs < 2) {
-            const newValue = value.substring(0, afterPrefix) + '\t' + value.substring(afterPrefix);
+            // Insert tab at the beginning of the line
+            const newValue = value.substring(0, lineStart) + '\t' + value.substring(lineStart);
             setInput(newValue);
 
             // Move cursor forward 1 position
@@ -279,31 +279,25 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
         return;
       }
 
-      // Shift+Tab: remove tab from current line (after prefix)
+      // Shift+Tab: remove tab from start of current line
       if (e.key === 'Tab' && e.shiftKey) {
         e.preventDefault();
 
         // Find start of current line
         const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
-        const lineContent = value.substring(lineStart);
 
-        // Find position after prefix (symbol + space or prefix + space)
-        const prefixMatch = lineContent.match(/^(\S) /);
-        if (prefixMatch) {
-          const afterPrefix = lineStart + prefixMatch[0].length;
-          // Check if there's a tab after the prefix
-          if (value[afterPrefix] === '\t') {
-            const newValue = value.substring(0, afterPrefix) + value.substring(afterPrefix + 1);
-            setInput(newValue);
+        // Check if there's a tab at the start of the line
+        if (value[lineStart] === '\t') {
+          const newValue = value.substring(0, lineStart) + value.substring(lineStart + 1);
+          setInput(newValue);
 
-            // Move cursor back 1 position
-            setTimeout(() => {
-              textarea.selectionStart = textarea.selectionEnd = Math.max(
-                lineStart,
-                selectionStart - 1
-              );
-            }, 0);
-          }
+          // Move cursor back 1 position
+          setTimeout(() => {
+            textarea.selectionStart = textarea.selectionEnd = Math.max(
+              lineStart,
+              selectionStart - 1
+            );
+          }, 0);
         }
         return;
       }
@@ -357,11 +351,11 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
         .map((line) => {
           if (!line.trim()) return '';
 
-          // Find prefix/symbol and content
-          const match = line.match(/^([□☑↹⇤⇥↻↝■\-*tern] )(\t*)(.*)/);
+          // Find prefix/symbol and content (tabs at start of line)
+          const match = line.match(/^(\t*)(\S) (.*)/);
           if (match) {
-            const symbolOrPrefix = match[1].trim();
-            const tabs = match[2];
+            const tabs = match[1];
+            const symbolOrPrefix = match[2];
             const content = match[3];
 
             // Convert symbol to prefix if needed
