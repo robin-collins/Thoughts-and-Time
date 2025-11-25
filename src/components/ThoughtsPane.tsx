@@ -16,9 +16,10 @@ import TimePromptModal from './TimePromptModal';
 import { Item } from '../types';
 import { parseInput } from '../utils/parser';
 import {
-  symbolsToPrefix,
   formatTimeForDisplay,
   prefixToSymbol,
+  convertToParserFormat,
+  symbolsToPrefix,
   symbolToPrefix as symbolToPrefixMap,
 } from '../utils/formatting';
 import { matchesSearch } from '../utils/search.tsx';
@@ -366,34 +367,9 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
 
     const createItems = (inputOverride?: string) => {
       const inputToProcess = inputOverride ?? input;
-      const lines = inputToProcess.split('\n');
 
-      // Convert input to format expected by parseMultiLine
-      // Format: prefix [Tab...] content
-      const formattedLines = lines
-        .map((line) => {
-          if (!line.trim()) return '';
-
-          // Find prefix/symbol and content (tabs at start of line)
-          const match = line.match(/^(\t*)(\S) (.*)/);
-          if (match) {
-            const tabs = match[1];
-            const symbolOrPrefix = match[2];
-            const content = match[3];
-
-            // Convert symbol to prefix if needed
-            const prefix = symbolsToPrefix(symbolOrPrefix + ' ').trim();
-
-            // Reconstruct: prefix + space + tabs + content
-            return `${prefix} ${tabs}${content}`;
-          }
-
-          // No prefix found - treat as note
-          const contentWithPrefix = symbolsToPrefix(line.trimStart());
-          return contentWithPrefix;
-        })
-        .filter((line) => line.trim() !== '')
-        .join('\n');
+      // Convert visual format to parser format using shared function
+      const formattedLines = convertToParserFormat(inputToProcess);
 
       // Use the new addItems for batch creation
       const result = addItems(formattedLines);

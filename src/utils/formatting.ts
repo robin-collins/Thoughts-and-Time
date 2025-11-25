@@ -40,6 +40,7 @@ export const prefixToSymbol: { [key: string]: string } = {
   t: '□',
   r: '↻',
   '*': '↝',
+  n: '↝',
 };
 
 /**
@@ -62,3 +63,45 @@ export const typeToSymbol: { [key: string]: string } = {
   routine: '↻',
   note: '↝',
 };
+
+/**
+ * Convert visual format to parser format
+ * Visual: "tabs + symbol + space + content" (e.g., "\t□ task")
+ * Parser: "prefix + space + tabs + content" (e.g., "t \ttask")
+ *
+ * Used by both main input box and edit box for consistent behavior.
+ */
+export function convertToParserFormat(input: string): string {
+  const lines = input.split('\n');
+
+  const convertedLines = lines.map((line) => {
+    if (!line.trim()) return '';
+
+    // Count leading tabs
+    let tabCount = 0;
+    while (tabCount < line.length && line[tabCount] === '\t') {
+      tabCount++;
+    }
+    const tabs = line.substring(0, tabCount);
+    const rest = line.substring(tabCount);
+
+    if (rest.length === 0) return '';
+
+    const firstChar = rest[0];
+
+    // Convert symbol to prefix, or keep if already a prefix
+    const prefix = symbolToPrefix[firstChar] || firstChar;
+
+    // Find where content starts (after symbol/prefix and whitespace)
+    let contentStart = 1;
+    while (contentStart < rest.length && /\s/.test(rest[contentStart])) {
+      contentStart++;
+    }
+    const content = rest.substring(contentStart);
+
+    // Reconstruct: prefix + space + tabs + content
+    return `${prefix} ${tabs}${content}`;
+  });
+
+  return convertedLines.filter((line) => line.trim() !== '').join('\n');
+}

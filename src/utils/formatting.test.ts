@@ -116,8 +116,12 @@ describe('prefixToSymbol', () => {
     expect(prefixToSymbol['*']).toBe('↝');
   });
 
-  it('has exactly 4 mappings', () => {
-    expect(Object.keys(prefixToSymbol)).toHaveLength(4);
+  it('has exactly 5 mappings', () => {
+    expect(Object.keys(prefixToSymbol)).toHaveLength(5);
+  });
+
+  it('maps n prefix to note symbol', () => {
+    expect(prefixToSymbol['n']).toBe('↝');
   });
 });
 

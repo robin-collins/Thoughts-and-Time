@@ -11,6 +11,7 @@
 - **Styling**: Tailwind CSS 3
 - **State**: Zustand with localStorage persistence
 - **Date Parsing**: chrono-node (natural language), date-fns
+- **Editor**: CodeMirror 6 (indentation, keymaps, symbol conversion)
 - **Virtualization**: @tanstack/react-virtual
 - **Testing**: Vitest (unit), Playwright (e2e)
 
@@ -129,6 +130,8 @@ npm run lint         # ESLint
 - `src/components/ThoughtsPane.tsx` - Left pane (thoughts)
 - `src/components/TimePane.tsx` - Right pane (timeline)
 - `src/components/ItemDisplay.tsx` - Item rendering
+- `src/components/ItemEditor.tsx` - Item edit mode (uses SymbolEditor)
+- `src/components/SymbolEditor.tsx` - CodeMirror 6 editor with Tab/indentation
 - `src/components/PaneErrorBoundary.tsx` - Error isolation for panes
 - `src/hooks/useWheelNavigation.ts` - Shared wheel navigation for book mode
 - `src/hooks/useFocusTrap.ts` - Focus trap for modals

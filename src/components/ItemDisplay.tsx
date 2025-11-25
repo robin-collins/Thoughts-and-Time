@@ -5,7 +5,7 @@ import { useStore } from '../store/useStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { parseInput, parseMultiLine } from '../utils/parser';
 import { createItem } from '../utils/itemFactory';
-import { symbolsToPrefix, formatTimeForDisplay, typeToSymbol } from '../utils/formatting';
+import { formatTimeForDisplay, typeToSymbol, convertToParserFormat, symbolsToPrefix } from '../utils/formatting';
 import { useToast } from '../hooks/useToast';
 import { useHistory } from '../store/useHistory';
 import { highlightMatches } from '../utils/search.tsx';
@@ -101,8 +101,8 @@ function ItemDisplay({
   ): string => {
     const symbol = typeToSymbol[targetItem.type] || '';
     const tabs = '\t'.repeat(level);
-    let line =
-      level === 0 ? `${symbol} ${targetItem.content}` : `${symbol}${tabs} ${targetItem.content}`;
+    // Format: tabs + symbol + space + content (for visual indentation)
+    let line = `${tabs}${symbol} ${targetItem.content}`;
 
     const childIds =
       'children' in targetItem ? (targetItem as { children: string[] }).children : [];
@@ -127,9 +127,12 @@ function ItemDisplay({
       return;
     }
 
-    // Convert symbols to prefixes for each line
-    const lines = editContent.split('\n').map((line) => symbolsToPrefix(line));
-    const contentWithPrefix = lines.join('\n');
+    // Convert visual format to parser format using shared function
+    console.log('=== SAVE ATTEMPT ===');
+    console.log('Raw:', JSON.stringify(editContent));
+    const contentWithPrefix = convertToParserFormat(editContent);
+    console.log('Converted:', JSON.stringify(contentWithPrefix));
+    const lines = contentWithPrefix.split('\n');
 
     // Check if this is multi-line content
     if (lines.length > 1) {
@@ -187,8 +190,10 @@ function ItemDisplay({
                   : line.type === 'event'
                     ? 'e'
                     : 'r';
-            const tabs = '\t'.repeat(line.level);
-            return `${prefix}${tabs} ${line.content}`;
+            // Use relative level (subtract 1 since these are children of the parent)
+            const relativeLevel = Math.max(0, line.level - 1);
+            const tabs = '\t'.repeat(relativeLevel);
+            return `${prefix} ${tabs}${line.content}`;
           })
           .join('\n');
 
@@ -397,7 +402,7 @@ function ItemDisplay({
                   >
                     {renderContent()}
                   </p>
-                  {(isHovered || isFocusWithin) && (
+                  {(isHovered || isFocusWithin) && depth === 0 && (
                     <ItemActions
                       onEdit={handleEdit}
                       onDelete={handleDelete}
@@ -482,7 +487,7 @@ function ItemDisplay({
           </div>
         </div>
 
-        {subItems.length > 0 && (
+        {!isEditing && subItems.length > 0 && (
           <div className="mt-1">
             {subItems.map((subItem) => (
               <ItemDisplay

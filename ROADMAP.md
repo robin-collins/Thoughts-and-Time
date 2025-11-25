@@ -770,6 +770,43 @@ n		Subnote (two Tabs = level 2)
 
 ---
 
+## Edit Box Enhancement with CodeMirror 6 (November 25, 2025)
+
+### ✅ Completed Improvements
+
+#### 1. CodeMirror 6 Integration
+
+- [x] Installed CodeMirror 6 packages (@codemirror/state, @codemirror/view, @codemirror/commands, @codemirror/language)
+- [x] Created `SymbolEditor` component with custom keymaps
+- [x] Proper Tab/Shift+Tab indentation with hierarchy enforcement
+- [x] Prefix-to-symbol auto-conversion (e.g., `t ` → `□ `)
+- [x] Matches app aesthetic (Crimson Text font at 18px with 1.3 line height)
+- [x] Custom theme with proper cursor styling
+
+**Files Created:**
+
+- `src/components/SymbolEditor.tsx` - CodeMirror 6-based editor component
+
+**Files Modified:**
+
+- `src/components/ItemEditor.tsx` - Refactored to use SymbolEditor
+- `src/components/ItemDisplay.tsx` - Fixed child creation (relative level), hide buttons on children
+- `src/utils/formatting.ts` - Added convertToParserFormat() shared function
+- `src/components/ThoughtsPane.tsx` - Uses shared conversion function
+- `package.json` - Added CodeMirror 6 dependencies
+
+**Key Features:**
+
+- Tab cycles through indent levels (0 → 1 → 2 → 0) with hierarchy enforcement
+- First line cannot be indented
+- Child indent level cannot exceed parent + 1 (max 2 tabs)
+- Enter submits, Shift+Enter adds new line
+- Escape cancels
+- Edit box only appears on parent items (depth === 0)
+- Children are hidden during edit and edited together with parent
+
+---
+
 ## Code Quality Improvements (November 22, 2025)
 
 ### ✅ Completed Improvements

@@ -569,6 +569,7 @@ export function parseMultiLine(input: string): MultiLineParseResult {
   const errors: string[] = [];
 
   const rawLines = input.split('\n').filter((line) => line.trim() !== '');
+  console.log('parseMultiLine received:', rawLines.map(l => JSON.stringify(l)));
 
   if (rawLines.length === 0) {
     return { lines: [], errors: ['Input is empty'] };
@@ -580,6 +581,7 @@ export function parseMultiLine(input: string): MultiLineParseResult {
 
     // Detect prefix first (t , e , r , n )
     const prefixMatch = rawLine.match(/^([tern]) /);
+    console.log(`Line ${i + 1}:`, JSON.stringify(rawLine), prefixMatch ? '✓' : '✗');
     if (!prefixMatch) {
       errors.push(`Line ${lineNum}: Missing prefix (t, e, r, or n)`);
       continue;
