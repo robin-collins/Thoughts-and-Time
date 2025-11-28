@@ -1002,6 +1002,25 @@ n		Subnote (two Tabs = level 2)
 
 ---
 
+## Design Decisions & Abandoned Features
+
+### Abandoned Features
+
+#### Drag & Drop Rescheduling
+**Decision**: Not implementing drag & drop for rescheduling items
+**Reasoning**:
+- Keyboard-first workflow is more efficient for power users
+- Daily Review + natural language parsing already provides intuitive rescheduling
+- Drag & drop adds complexity without significant UX benefit for this use case
+- Mobile implementation would be challenging and potentially confusing
+
+**Current Approach**:
+- Reschedule via Daily Review (edit and add new time)
+- Edit items directly in timeline or thoughts pane
+- Natural language parsing handles date/time updates elegantly
+
+---
+
 **Status Key**:
 
 - ✅ Completed

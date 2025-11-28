@@ -1,0 +1,298 @@
+# Mobile Responsive Design - Mockups
+
+## Design Philosophy
+- **Single pane view** - switch between Thoughts and Time panes
+- **Bottom navigation** - thumb-friendly
+- **Swipe gestures** - natural mobile interactions
+- **Floating action button (FAB)** - quick capture
+- **Bottom sheet** - Daily Review doesn't block content
+
+---
+
+## 📱 Screen 1: Thoughts Pane (Portrait)
+
+```
+┌─────────────────────────────────────┐
+│  ◀ Thoughts         [🔍] [⚙️]  ▶   │ ← Swipe left/right to switch panes
+├─────────────────────────────────────┤
+│                                     │
+│  WEDNESDAY, NOV 20, 2025            │
+│                                     │
+│  9:00 AM                            │
+│  □ Plan weekend family outing       │
+│    □ Check botanical garden hours   │
+│    □ Pack picnic supplies           │
+│                                     │
+│  9:00 AM                            │
+│  ↝ Remember to bring sketchbook to  │
+│    botanical garden - great...      │
+│                                     │
+│  THURSDAY, NOV 27, 2025             │
+│                                     │
+│  ⋮                                  │
+│                                     │
+│  ⋮ (scroll more content)            │
+│                                     │
+│                                     │
+│                                     │
+│                        [+]          │ ← FAB (Floating Action Button)
+│                                     │
+├─────────────────────────────────────┤
+│ Type here... (tap to expand input)  │ ← Collapsed input bar
+└─────────────────────────────────────┘
+     👆 Tap to expand full input
+```
+
+---
+
+## 📱 Screen 2: Input Expanded (Portrait)
+
+```
+┌─────────────────────────────────────┐
+│  ◀ Thoughts         [🔍] [⚙️]  ▶   │
+├─────────────────────────────────────┤
+│                                     │
+│  [Dimmed background overlay]        │
+│                                     │
+│                                     │
+│                                     │
+│                                     │
+│ ┌─────────────────────────────────┐ │
+│ │ t Main task at 2pm              │ │ ← Full keyboard shown
+│ │ t   Subtask 1                   │ │
+│ │ │                               │ │
+│ │ │ [Tab] indent [↵] submit      │ │
+│ │ │ [Shift+↵] new line           │ │
+│ │ └───────────────────────────────┘ │
+│ │                         [Send ✓]│ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│                                     │
+│              [Keyboard]             │
+└─────────────────────────────────────┘
+```
+
+---
+
+## 📱 Screen 3: TimePane (Portrait)
+
+```
+┌─────────────────────────────────────┐
+│  ◀         Time Pane         [⚙️] ▶ │
+├─────────────────────────────────────┤
+│                                     │
+│  ■ Daily Review              [3] ▼  │ ← Tap to expand bottom sheet
+│                                     │
+│  WEDNESDAY, NOV 27, 2025            │
+│                                     │
+│  9:00 AM                            │
+│  □ Plan weekend family outing       │
+│    □ Check botanical garden hours   │
+│    □ Pack picnic supplies           │
+│                                     │
+│  10:00 AM                           │
+│  □ Start new commission - pet       │
+│    □ Study reference photos         │
+│    □ Rough sketch proportions       │
+│    □ Email client with initial...   │
+│                                     │
+│  2:00 PM                            │
+│  □ Order more Payne's Gray and...   │
+│                                     │
+│  4:00 PM - 5:30 PM                  │
+│  ↹ Emma art show at school          │
+│                                     │
+│                        [+]          │
+│                                     │
+├─────────────────────────────────────┤
+│ Type here... (tap to expand input)  │
+└─────────────────────────────────────┘
+```
+
+---
+
+## 📱 Screen 4: Daily Review Bottom Sheet
+
+```
+┌─────────────────────────────────────┐
+│  ◀         Time Pane         [⚙️] ▶ │
+├─────────────────────────────────────┤
+│  [Dimmed overlay - can tap to close]│
+│                                     │
+│  WEDNESDAY, NOV 27, 2025            │
+│                                     │
+│  10:00 AM                           │
+│  □ Start new commission...          │
+│    □ Study reference photos         │
+│                                     │
+├═════════════════════════════════════┤ ← Drag handle
+│ ═══   Daily Review                  │
+├─────────────────────────────────────┤
+│ │ • Work on Martinez commission     │ │
+│ │   (9 days old)          [↻][✓][×]│ │
+│ │                                   │ │
+│ │ • Reply to gallery inquiry        │ │
+│ │   (4 days old)          [↻][✓][×]│ │
+│ │                                   │ │
+│ │ • Update Instagram with work      │ │
+│ │   (3 days old)          [↻][✓][×]│ │
+│ │                                   │ │
+│ │ • Send invoice to Martinez        │ │
+│ │   (2 days old)          [↻][✓][×]│ │
+│ │                                   │ │
+│ │         [Show 2 more...]          │ │
+│ └───────────────────────────────────┘ │
+│                                       │
+│              [Keyboard safe area]     │
+└───────────────────────────────────────┘
+    👆 Swipe down to dismiss
+```
+
+---
+
+## 📱 Screen 5: Landscape Mode
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│  Thoughts & Time                              [🔍] [⚙️]           │
+├──────────────────────────────┬────────────────────────────────────┤
+│ THOUGHTS                     │ TIME PANE                          │
+│ ─────────                    │ ──────────                         │
+│                              │                                    │
+│ WEDNESDAY, NOV 27, 2025      │ ■ Daily Review         [3] ▼       │
+│                              │                                    │
+│ 9:00 AM                      │ WEDNESDAY, NOV 27, 2025            │
+│ □ Plan weekend family outing │                                    │
+│   □ Check botanical garden..│ 9:00 AM                            │
+│   □ Pack picnic supplies     │ □ Plan weekend family outing       │
+│                              │   □ Check botanical garden hours   │
+│ 9:00 AM                      │   □ Pack picnic supplies           │
+│ ↝ Remember to bring...       │                                    │
+│                              │ 10:00 AM                           │
+│ ⋮                            │ □ Start new commission - pet       │
+│                              │   □ Study reference photos         │
+│                              │   ⋮                                │
+│                              │                                    │
+├──────────────────────────────┴────────────────────────────────────┤
+│ Type here... (Tab to indent, Shift+Enter for new line)      [→]  │
+└───────────────────────────────────────────────────────────────────┘
+         👆 Dual pane in landscape (like desktop)
+```
+
+---
+
+## 🎨 Design Specs
+
+### Breakpoints
+- **Mobile Portrait**: < 768px (single pane)
+- **Tablet/Landscape**: 768px - 1024px (optional dual pane or larger single)
+- **Desktop**: > 1024px (current dual pane layout)
+
+### Navigation
+- **Swipe left/right**: Switch between Thoughts ↔ Time panes
+- **Header arrows**: Tap ◀ ▶ to switch panes
+- **Tap Daily Review badge**: Open bottom sheet
+
+### Input Behavior
+- **Collapsed**: Sticky bar at bottom, tap to expand
+- **Expanded**: Full screen overlay with dimmed background
+- **Keyboard shortcuts**: Still work (Tab, Shift+Enter, etc.)
+- **Submit**: Tap checkmark or Enter key
+
+### Daily Review
+- **Bottom sheet**: Swipe up to open, down to close
+- **Drag handle**: Visual affordance at top
+- **Backdrop tap**: Close sheet
+- **Actions inline**: [↻ Reschedule] [✓ Complete] [× Cancel]
+
+### Touch Targets
+- **Minimum 44x44px**: All interactive elements
+- **Spacing**: 8px between touch targets
+- **Checkboxes**: 32x32px active area (larger than visual)
+
+### Gestures
+```
+Swipe right on Thoughts pane → Go to Time pane
+Swipe left on Time pane → Go to Thoughts pane
+Swipe up on Daily Review badge → Open review sheet
+Swipe down on sheet → Close sheet
+Pull to refresh (at top of pane) → Reload data
+Long press on item → Show context menu (edit/delete)
+```
+
+### Floating Action Button (FAB)
+- **Position**: Bottom right, above input bar
+- **Action**: Quick capture (opens input immediately)
+- **Animation**: Bounce in on page load
+- **Hide on scroll down**: Shows on scroll up
+
+### Bottom Input Bar
+- **Collapsed**: 52px height, shows placeholder
+- **Expanded**: Full screen overlay, auto-focus
+- **Backdrop**: Semi-transparent black (opacity 0.5)
+- **Animation**: Slide up with ease-out
+
+---
+
+## 🎯 Key Mobile UX Principles
+
+1. **Thumb Zone**: Most important actions within thumb reach
+2. **One-handed operation**: Everything accessible with one hand
+3. **Gestures over buttons**: Swipe to navigate, not multiple taps
+4. **Progressive disclosure**: Don't show everything at once
+5. **Clear affordances**: Visual hints for swipeable elements
+6. **Fast input**: Minimize taps to create items
+7. **Undo visible**: Toasts with undo buttons (already implemented)
+
+---
+
+## 📐 Visual Hierarchy (Mobile)
+
+```
+Header (Navigation)              60px
+  ↓
+Content Area (scrollable)        Fill
+  ↓
+Input Bar (collapsed)            52px
+  ↓
+Safe Area (iOS notch, etc)       Auto
+```
+
+---
+
+## 🎭 Example Flow: Creating a Task on Mobile
+
+1. **User on Thoughts pane**
+2. Taps input bar OR taps FAB
+3. Input expands full screen, keyboard shows
+4. Types: `t Buy groceries at 5pm`
+5. Taps Tab, types: `Milk, eggs, bread`
+6. Taps Send ✓
+7. Input collapses, item appears in list
+8. Swipes left to see it in Time pane at 5pm
+
+---
+
+## 💡 Additional Mobile Considerations
+
+### Offline Support
+- Service worker for offline access
+- Queue items when offline
+- Sync icon shows status
+
+### Performance
+- Virtual scrolling already implemented ✓
+- Lazy load images (if attachments added)
+- Minimize animations on low-end devices
+
+### Native Feel
+- Use system fonts for better performance
+- Haptic feedback on actions (if available)
+- Respect system dark/light mode
+- Safe area insets for notch/home indicator
+
+### Accessibility
+- Touch targets meet 44x44px minimum
+- High contrast mode support
+- Screen reader announcements for state changes
+- Focus management for keyboard users
