@@ -102,11 +102,13 @@
 │  4:00 PM - 5:30 PM                  │
 │  ↹ Emma art show at school          │
 │                                     │
-│                        [+]          │
+│  ⋮ (scroll more content)            │
 │                                     │
-├─────────────────────────────────────┤
-│ Type here... (tap to expand input)  │
+│                                     │
+│                                     │
 └─────────────────────────────────────┘
+     👈 Swipe right to go back to
+        Thoughts pane to add items
 ```
 
 ---
@@ -248,6 +250,7 @@ Long press on item → Show context menu (edit/delete)
 
 ## 📐 Visual Hierarchy (Mobile)
 
+### Thoughts Pane
 ```
 Header (Navigation)              60px
   ↓
@@ -258,18 +261,33 @@ Input Bar (collapsed)            52px
 Safe Area (iOS notch, etc)       Auto
 ```
 
+### Time Pane (Read-only)
+```
+Header (Navigation)              60px
+  ↓
+Content Area (scrollable)        Fill
+  ↓
+Safe Area (iOS notch, etc)       Auto
+```
+*No input bar - TimePane is read-only for viewing timeline*
+
 ---
 
 ## 🎭 Example Flow: Creating a Task on Mobile
 
-1. **User on Thoughts pane**
+1. **User on Thoughts pane** (input available here)
 2. Taps input bar OR taps FAB
 3. Input expands full screen, keyboard shows
 4. Types: `t Buy groceries at 5pm`
 5. Taps Tab, types: `Milk, eggs, bread`
 6. Taps Send ✓
-7. Input collapses, item appears in list
+7. Input collapses, item appears in Thoughts list
 8. Swipes left to see it in Time pane at 5pm
+
+**Note**: If user is on Time pane and wants to add an item, they must:
+- Swipe right to go back to Thoughts pane, OR
+- Tap the left arrow in header to switch panes
+- Then use the input bar (only available on Thoughts pane)
 
 ---
 
