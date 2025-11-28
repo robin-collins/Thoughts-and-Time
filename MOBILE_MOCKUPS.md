@@ -13,7 +13,7 @@
 
 ```
 ┌─────────────────────────────────────┐
-│  ◀ Thoughts         [🔍] [⚙️]  ▶   │ ← Swipe left/right to switch panes
+│       Thoughts & Time      [🔍][⚙️] │ ← Clean header, no arrows
 ├─────────────────────────────────────┤
 │                                     │
 │  WEDNESDAY, NOV 20, 2025            │
@@ -38,9 +38,10 @@
 │                        [+]          │ ← FAB (Floating Action Button)
 │                                     │
 ├─────────────────────────────────────┤
-│ Type here... (tap to expand input)  │ ← Collapsed input bar
+│ ● ○  Type here... (tap to expand)  │ ← Dots show which pane (● = active)
 └─────────────────────────────────────┘
-     👆 Tap to expand full input
+ 👆 Left dot = Thoughts, Right dot = Time
+    Swipe left ← to go to Time pane →
 ```
 
 ---
@@ -49,7 +50,7 @@
 
 ```
 ┌─────────────────────────────────────┐
-│  ◀ Thoughts         [🔍] [⚙️]  ▶   │
+│       Thoughts & Time      [🔍][⚙️] │
 ├─────────────────────────────────────┤
 │                                     │
 │  [Dimmed background overlay]        │
@@ -78,7 +79,7 @@
 
 ```
 ┌─────────────────────────────────────┐
-│  ◀         Time Pane         [⚙️] ▶ │
+│       Thoughts & Time      [🔍][⚙️] │ ← Same header, clean
 ├─────────────────────────────────────┤
 │                                     │
 │  ■ Daily Review              [3] ▼  │ ← Tap to expand bottom sheet
@@ -105,9 +106,10 @@
 │  ⋮ (scroll more content)            │
 │                                     │
 │                                     │
-│                                     │
+├─────────────────────────────────────┤
+│ ○ ●              [Thumb zone safe]  │ ← Right dot active = Time pane
 └─────────────────────────────────────┘
-     👈 Swipe right to go back to
+     👈 Swipe right → to go back to
         Thoughts pane to add items
 ```
 
@@ -117,7 +119,7 @@
 
 ```
 ┌─────────────────────────────────────┐
-│  ◀         Time Pane         [⚙️] ▶ │
+│       Thoughts & Time      [🔍][⚙️] │
 ├─────────────────────────────────────┤
 │  [Dimmed overlay - can tap to close]│
 │                                     │
@@ -190,10 +192,14 @@
 - **Tablet/Landscape**: 768px - 1024px (optional dual pane or larger single)
 - **Desktop**: > 1024px (current dual pane layout)
 
-### Navigation
-- **Swipe left/right**: Switch between Thoughts ↔ Time panes
-- **Header arrows**: Tap ◀ ▶ to switch panes
+### Navigation (Thumb-Zone Optimized)
+- **Swipe left/right**: PRIMARY navigation - Switch between Thoughts ↔ Time panes
+- **Pane indicators (dots)**: Visual feedback at bottom showing current pane
+  - ● ○ = Thoughts pane active
+  - ○ ● = Time pane active
+  - Dots are tappable to switch panes (alternative to swiping)
 - **Tap Daily Review badge**: Open bottom sheet
+- **No header arrows**: Removed - too far from thumb, swipe is better
 
 ### Input Behavior
 - **Collapsed**: Sticky bar at bottom, tap to expand
@@ -212,15 +218,19 @@
 - **Spacing**: 8px between touch targets
 - **Checkboxes**: 32x32px active area (larger than visual)
 
-### Gestures
+### Gestures (All in Thumb Zone)
 ```
-Swipe right on Thoughts pane → Go to Time pane
-Swipe left on Time pane → Go to Thoughts pane
+Swipe left on Thoughts pane → Go to Time pane
+Swipe right on Time pane → Go to Thoughts pane
+Tap pane indicator dots → Switch panes (alternative to swipe)
 Swipe up on Daily Review badge → Open review sheet
 Swipe down on sheet → Close sheet
-Pull to refresh (at top of pane) → Reload data
+Pull to refresh (at top of pane) → Reload data (optional)
 Long press on item → Show context menu (edit/delete)
+Tap input bar → Expand full screen input
 ```
+
+**Thumb Zone Priority**: All primary actions (swipe, tap input, tap dots) are in bottom third of screen.
 
 ### Floating Action Button (FAB)
 - **Position**: Bottom right, above input bar
@@ -238,7 +248,29 @@ Long press on item → Show context menu (edit/delete)
 
 ## 🎯 Key Mobile UX Principles
 
-1. **Thumb Zone**: Most important actions within thumb reach
+### Thumb Zone First
+Modern smartphones (6"+ screens) make top header unreachable with one hand. All primary navigation moved to bottom:
+
+```
+┌─────────────────────────────┐
+│ ← Unreachable (hard zone)   │  Header: Display only
+│                             │
+│                             │
+│                             │
+│ ← Stretch (medium zone)     │  Content: Scrollable
+│                             │
+│                             │
+│ ← Natural (easy zone)       │
+├─────────────────────────────┤
+│ ● ○  Input...          [+]  │  ← ALL controls here
+└─────────────────────────────┘  Bottom: Thumb-friendly
+```
+
+**Design Decision**: Swipe gestures + bottom indicators instead of top header arrows.
+
+### Other Principles
+
+1. **Thumb Zone**: Most important actions within thumb reach (bottom third)
 2. **One-handed operation**: Everything accessible with one hand
 3. **Gestures over buttons**: Swipe to navigate, not multiple taps
 4. **Progressive disclosure**: Don't show everything at once
@@ -285,9 +317,11 @@ Safe Area (iOS notch, etc)       Auto
 8. Swipes left to see it in Time pane at 5pm
 
 **Note**: If user is on Time pane and wants to add an item, they must:
-- Swipe right to go back to Thoughts pane, OR
-- Tap the left arrow in header to switch panes
+- **Swipe right** to go back to Thoughts pane (primary method), OR
+- **Tap left dot** (● ○) to switch to Thoughts pane
 - Then use the input bar (only available on Thoughts pane)
+
+**Ergonomics**: Both methods keep thumb in comfortable zone at bottom of screen
 
 ---
 
