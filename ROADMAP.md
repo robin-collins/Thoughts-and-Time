@@ -1,6 +1,6 @@
 # Thoughts & Time - Development Roadmap
 
-**Last Updated**: November 23, 2025
+**Last Updated**: November 28, 2025
 **Current Status**: MVP with core features ✅
 
 ---
@@ -391,24 +391,44 @@ domain: 13px, #6A6A6A
 
 #### 12. Mobile Responsive Optimizations
 
-**Status**: Partially responsive, needs improvements
+**Status**: Design complete ✅, Implementation pending
 
-**Requirements**:
+**Design Mockups**: See `MOBILE_MOCKUPS.md` for comprehensive mobile design specification
+
+**Completed Design Work**:
+
+- [x] Mobile mockups with footer-based navigation (thumb-zone optimized)
+- [x] Footer shows active pane + inactive pane with directional arrows
+- [x] Swipe gesture specification (anywhere except footer)
+- [x] Search/Settings buttons in bottom right
+- [x] Single-pane view with transitions
+- [x] Daily Review as bottom sheet
+- [x] 14 edge cases documented with solutions
+  - Footer crowding, text truncation, accidental taps
+  - Swipe conflicts, keyboard behavior, accessibility
+  - Modals, animations, z-index, safe areas
+
+**Implementation Requirements**:
 
 - [ ] Swipeable panes (swipe left/right to switch)
-- [ ] Touch gesture detection
+- [ ] Touch gesture detection with velocity thresholds
 - [ ] Mobile tap targets (44×44px minimum)
-- [ ] Mobile-optimized spacing (24px instead of 48px)
-- [ ] Virtual keyboard handling
-- [ ] iOS Safari fixes (viewport, scroll bounce)
+- [ ] Footer navigation with text labels and icons
+- [ ] Hide footer on scroll down, show on scroll up
+- [ ] Virtual keyboard handling (hide footer when keyboard visible)
+- [ ] iOS Safari fixes (viewport, scroll bounce, safe areas)
 - [ ] Android Chrome fixes
+- [ ] Responsive text breakpoints (≥390px, 360-389px, <360px)
+- [ ] Haptic feedback on pane switch
+- [ ] First-launch onboarding (arrow pulse animation)
 
 **Files to modify**:
 
-- `src/App.tsx` (add swipe detection)
+- `src/App.tsx` (add swipe detection, footer navigation)
 - `src/components/*.tsx` (adjust tap target sizes)
-- `src/styles/index.css` (mobile-specific styles)
-- Add: `src/hooks/useSwipeGesture.ts` (new file)
+- `src/styles/index.css` (mobile-specific styles, footer, animations)
+- Add: `src/hooks/useSwipeGesture.ts` (new file - gesture detection)
+- Add: `src/components/MobileFooter.tsx` (new file - footer navigation)
 
 ---
 
@@ -1032,4 +1052,4 @@ n		Subnote (two Tabs = level 2)
 
 ---
 
-Last updated: November 22, 2025
+Last updated: November 28, 2025
