@@ -1,11 +1,13 @@
 # Mobile Responsive Design - Mockups
 
 ## Design Philosophy
+- **No header** - maximize content space, all controls in footer
 - **Single pane view** - switch between Thoughts and Time panes
-- **Bottom navigation** - thumb-friendly
-- **Swipe gestures** - natural mobile interactions
-- **Floating action button (FAB)** - quick capture
+- **Footer navigation** - thumb-zone optimized with text labels + arrows
+- **Swipe anywhere** - natural gesture navigation (except footer area)
+- **Floating action button (FAB)** - quick capture (Thoughts pane only)
 - **Bottom sheet** - Daily Review doesn't block content
+- **All controls reachable** - search, settings, navigation all in thumb zone
 
 ---
 
@@ -13,9 +15,7 @@
 
 ```
 ┌─────────────────────────────────────┐
-│       Thoughts & Time      [🔍][⚙️] │ ← Clean header, no arrows
-├─────────────────────────────────────┤
-│                                     │
+│                                     │ ← No header! More content space
 │  WEDNESDAY, NOV 20, 2025            │
 │                                     │
 │  9:00 AM                            │
@@ -32,16 +32,22 @@
 │  ⋮                                  │
 │                                     │
 │  ⋮ (scroll more content)            │
+│   ⋮                                 │
+│    ⋮                                │
+│     ⋮                               │
+│      [+]                            │ ← FAB (Floating Action Button)
 │                                     │
-│                                     │
-│                                     │
-│                        [+]          │ ← FAB (Floating Action Button)
-│                                     │
-├─────────────────────────────────────┤
-│ ● ○  Type here... (tap to expand)  │ ← Dots show which pane (● = active)
+│ ┌─────────────────────────────────┐ │
+│ │ Type here... (tap to expand)    │ │ ← Input bar
+│ └─────────────────────────────────┘ │
+│ Thoughts & Time →          [🔍][⚙️] │ ← Footer: ALL controls in thumb zone
 └─────────────────────────────────────┘
- 👆 Left dot = Thoughts, Right dot = Time
-    Swipe left ← to go to Time pane →
+  ^^^^^^^^ ^^^^^^ ^           ^^^^^^^^
+  active   greyed arrow       buttons
+  (white)  (shows where       (right)
+           swipe goes)
+
+  👆 Swipe left anywhere → to go to Time pane
 ```
 
 ---
@@ -50,16 +56,15 @@
 
 ```
 ┌─────────────────────────────────────┐
-│       Thoughts & Time      [🔍][⚙️] │
-├─────────────────────────────────────┤
 │                                     │
 │  [Dimmed background overlay]        │
+│      (tap backdrop to close)        │
 │                                     │
 │                                     │
 │                                     │
 │                                     │
 │ ┌─────────────────────────────────┐ │
-│ │ t Main task at 2pm              │ │ ← Full keyboard shown
+│ │ t Main task at 2pm              │ │ ← Full screen input
 │ │ t   Subtask 1                   │ │
 │ │ │                               │ │
 │ │ │ [Tab] indent [↵] submit      │ │
@@ -71,6 +76,8 @@
 │                                     │
 │              [Keyboard]             │
 └─────────────────────────────────────┘
+   Footer hidden during input to maximize
+   keyboard space (iOS safe area considered)
 ```
 
 ---
@@ -79,9 +86,7 @@
 
 ```
 ┌─────────────────────────────────────┐
-│       Thoughts & Time      [🔍][⚙️] │ ← Same header, clean
-├─────────────────────────────────────┤
-│                                     │
+│                                     │ ← No header! Content fills screen
 │  ■ Daily Review              [3] ▼  │ ← Tap to expand bottom sheet
 │                                     │
 │  WEDNESDAY, NOV 27, 2025            │
@@ -104,13 +109,19 @@
 │  ↹ Emma art show at school          │
 │                                     │
 │  ⋮ (scroll more content)            │
+│   ⋮                                 │
+│    ⋮                                │
 │                                     │
-│                                     │
-├─────────────────────────────────────┤
-│ ○ ●              [Thumb zone safe]  │ ← Right dot active = Time pane
+│ ← Thoughts & Time          [🔍][⚙️] │ ← Footer: ALL controls here
 └─────────────────────────────────────┘
-     👈 Swipe right → to go back to
-        Thoughts pane to add items
+  ^ ^^^^^^^^^ ^^^^           ^^^^^^^^
+  arrow greyed  active        buttons
+        (shows  (white)       (right)
+         where
+         swipe goes)
+
+  👉 Swipe right anywhere ← to go to Thoughts pane
+     (to add new items - no input on Time pane)
 ```
 
 ---
@@ -119,9 +130,7 @@
 
 ```
 ┌─────────────────────────────────────┐
-│       Thoughts & Time      [🔍][⚙️] │
-├─────────────────────────────────────┤
-│  [Dimmed overlay - can tap to close]│
+│  [Dimmed overlay - tap to close]    │
 │                                     │
 │  WEDNESDAY, NOV 27, 2025            │
 │                                     │
@@ -129,27 +138,27 @@
 │  □ Start new commission...          │
 │    □ Study reference photos         │
 │                                     │
-├═════════════════════════════════════┤ ← Drag handle
+├═════════════════════════════════════┤ ← Drag handle (swipe down)
 │ ═══   Daily Review                  │
 ├─────────────────────────────────────┤
-│ │ • Work on Martinez commission     │ │
-│ │   (9 days old)          [↻][✓][×]│ │
-│ │                                   │ │
-│ │ • Reply to gallery inquiry        │ │
-│ │   (4 days old)          [↻][✓][×]│ │
-│ │                                   │ │
-│ │ • Update Instagram with work      │ │
-│ │   (3 days old)          [↻][✓][×]│ │
-│ │                                   │ │
-│ │ • Send invoice to Martinez        │ │
-│ │   (2 days old)          [↻][✓][×]│ │
-│ │                                   │ │
-│ │         [Show 2 more...]          │ │
-│ └───────────────────────────────────┘ │
-│                                       │
-│              [Keyboard safe area]     │
-└───────────────────────────────────────┘
-    👆 Swipe down to dismiss
+│ • Work on Martinez commission       │
+│   (9 days old)          [↻][✓][×]  │
+│                                     │
+│ • Reply to gallery inquiry          │
+│   (4 days old)          [↻][✓][×]  │
+│                                     │
+│ • Update Instagram with work        │
+│   (3 days old)          [↻][✓][×]  │
+│                                     │
+│ • Send invoice to Martinez          │
+│   (2 days old)          [↻][✓][×]  │
+│                                     │
+│         [Show 2 more...]            │
+│                                     │
+│ ← Thoughts & Time          [🔍][⚙️] │ ← Footer visible even with sheet
+└─────────────────────────────────────┘
+    👆 Swipe down on handle to dismiss
+       or tap dimmed area above
 ```
 
 ---
@@ -192,14 +201,30 @@
 - **Tablet/Landscape**: 768px - 1024px (optional dual pane or larger single)
 - **Desktop**: > 1024px (current dual pane layout)
 
-### Navigation (Thumb-Zone Optimized)
-- **Swipe left/right**: PRIMARY navigation - Switch between Thoughts ↔ Time panes
-- **Pane indicators (dots)**: Visual feedback at bottom showing current pane
-  - ● ○ = Thoughts pane active
-  - ○ ● = Time pane active
-  - Dots are tappable to switch panes (alternative to swiping)
-- **Tap Daily Review badge**: Open bottom sheet
-- **No header arrows**: Removed - too far from thumb, swipe is better
+### Navigation (100% Thumb-Zone)
+**Footer Layout:**
+```
+Thoughts & Time →          [🔍][⚙️]   (Thoughts pane)
+^^^^^^^^ ^^^^^^ ^          ^^^^^^^^
+active   greyed arrow      buttons
+
+← Thoughts & Time          [🔍][⚙️]   (Time pane)
+^ ^^^^^^^^^ ^^^^           ^^^^^^^^
+arrow greyed  active       buttons
+```
+
+**Navigation Methods:**
+1. **Swipe anywhere** (PRIMARY): Swipe left/right to switch panes
+   - Works on entire content area (not footer)
+   - Natural, discoverable gesture
+   - Arrow in footer shows swipe direction
+
+2. **Tap text labels** (ALTERNATIVE): Tap greyed text to switch
+   - "& Time →" on Thoughts pane = tap to go to Time
+   - "← Thoughts &" on Time pane = tap to go to Thoughts
+   - For users who prefer tapping over swiping
+
+3. **No header**: Removed entirely - maximizes content, all controls in footer
 
 ### Input Behavior
 - **Collapsed**: Sticky bar at bottom, tap to expand
@@ -218,19 +243,24 @@
 - **Spacing**: 8px between touch targets
 - **Checkboxes**: 32x32px active area (larger than visual)
 
-### Gestures (All in Thumb Zone)
+### Gestures (All Thumb-Friendly)
 ```
-Swipe left on Thoughts pane → Go to Time pane
-Swipe right on Time pane → Go to Thoughts pane
-Tap pane indicator dots → Switch panes (alternative to swipe)
-Swipe up on Daily Review badge → Open review sheet
-Swipe down on sheet → Close sheet
-Pull to refresh (at top of pane) → Reload data (optional)
-Long press on item → Show context menu (edit/delete)
-Tap input bar → Expand full screen input
+Swipe left (anywhere on content) → Go to Time pane
+Swipe right (anywhere on content) → Go to Thoughts pane
+Tap greyed text in footer → Switch panes (alternative)
+Tap search button [🔍] → Open search
+Tap settings button [⚙️] → Open settings
+Tap input bar → Expand full screen input (Thoughts only)
+Tap FAB [+] → Open input (Thoughts only)
+Swipe up on Daily Review badge → Open bottom sheet
+Swipe down on sheet handle → Close sheet
+Long press on item → Context menu (edit/delete)
 ```
 
-**Thumb Zone Priority**: All primary actions (swipe, tap input, tap dots) are in bottom third of screen.
+**Critical Design Rule**:
+- Swipe works on **content area only** (not footer)
+- Footer is safe zone for taps (buttons, text labels)
+- This prevents accidental navigation while tapping footer controls
 
 ### Floating Action Button (FAB)
 - **Position**: Bottom right, above input bar
@@ -284,24 +314,30 @@ Modern smartphones (6"+ screens) make top header unreachable with one hand. All 
 
 ### Thoughts Pane
 ```
-Header (Navigation)              60px
+(No Header - maximizes content!)
   ↓
-Content Area (scrollable)        Fill
+Content Area (scrollable)        Fill (entire height)
   ↓
 Input Bar (collapsed)            52px
+  ↓
+Footer (navigation + buttons)    48px
   ↓
 Safe Area (iOS notch, etc)       Auto
 ```
 
 ### Time Pane (Read-only)
 ```
-Header (Navigation)              60px
+(No Header - maximizes content!)
   ↓
-Content Area (scrollable)        Fill
+Content Area (scrollable)        Fill (entire height)
+  ↓
+Footer (navigation + buttons)    48px
   ↓
 Safe Area (iOS notch, etc)       Auto
 ```
-*No input bar - TimePane is read-only for viewing timeline*
+*No input bar on TimePane - only in footer for navigation*
+
+**Space Saved**: ~60px by removing header = 2-3 extra items visible!
 
 ---
 
@@ -316,12 +352,12 @@ Safe Area (iOS notch, etc)       Auto
 7. Input collapses, item appears in Thoughts list
 8. Swipes left to see it in Time pane at 5pm
 
-**Note**: If user is on Time pane and wants to add an item, they must:
-- **Swipe right** to go back to Thoughts pane (primary method), OR
-- **Tap left dot** (● ○) to switch to Thoughts pane
-- Then use the input bar (only available on Thoughts pane)
+**Note**: If user is on Time pane and wants to add an item:
+- **Swipe right anywhere** on content (primary method), OR
+- **Tap "← Thoughts &"** greyed text in footer
+- Both methods go back to Thoughts pane where input is available
 
-**Ergonomics**: Both methods keep thumb in comfortable zone at bottom of screen
+**Ergonomics**: Swipe is natural, tap text is precise alternative - both thumb-friendly!
 
 ---
 
