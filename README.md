@@ -1,5 +1,7 @@
 # Thoughts & Time
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A minimalist productivity app that harmonizes thought capture with time-based planning through a dual-pane interface.
 
 ## Screenshot
