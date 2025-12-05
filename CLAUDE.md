@@ -197,3 +197,9 @@ npm run lint         # ESLint
 8. **Accessibility** - App includes skip navigation link and ARIA labels
 9. **Test coverage** - 279 tests covering stores, hooks, and components
 10. **TimePane subtasks** - Only todo children appear in timeline (notes filtered out)
+11. **Daily Review filtering** - Excludes todos already scheduled for today/future to prevent duplication
+12. **Reference date parsing** - Reschedule actions use today as reference (not original date)
+
+## License
+
+This project is licensed under the Apache License 2.0, which requires attribution when used or distributed. Copyright 2025 Sawt Dakhili. See LICENSE file for details.

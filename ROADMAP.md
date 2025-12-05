@@ -66,21 +66,31 @@ This app enforces a strict scheduling philosophy: **every single task, event, an
 
 **Status**: Completed
 
-**Current Behavior**: Daily Review shows incomplete todos from past days.
+**Current Behavior**: Daily Review shows incomplete todos from past days, excluding those already scheduled for today or future dates.
 
-**Philosophy Alignment**: Since all items in this app must be scheduled (see Core Philosophy above), Daily Review shows all incomplete scheduled todos from previous days that need to be rescheduled or completed.
+**Philosophy Alignment**: Since all items in this app must be scheduled (see Core Philosophy above), Daily Review shows all incomplete scheduled todos from previous days that need to be rescheduled or completed. Items already scheduled for today/future are excluded from Daily Review to prevent duplication with the timeline.
 
 **Completed**:
 
 - [x] Track handled items (items disappear after action)
+- [x] Real-time cleanup of handledItems when todos are unchecked (November 28, 2025)
+- [x] Exclude todos scheduled for today/future from Daily Review (November 28, 2025)
+- [x] Reschedule parsing uses today as reference date (November 28, 2025)
 - [x] Pagination for 10+ items ("Show more" button)
 - [x] Header indicator (■→□) when all handled
 - [x] Auto-complete Daily Review when all items handled
 - [x] Display subtasks nested in review items
 
+**Recent Fixes** (November 28, 2025):
+- Fixed: Unchecking old todos now makes them reappear in Daily Review immediately
+- Fixed: Checking old todos makes them disappear from Daily Review immediately
+- Fixed: Rescheduling from Daily Review now interprets "tomorrow" relative to today, not the original date
+- Fixed: Todos scheduled for today or future no longer duplicate in Daily Review and timeline
+
 **Files modified**:
 
-- `src/components/DailyReview.tsx`
+- `src/components/DailyReview.tsx` (handledItems cleanup, scheduled filtering, reference date)
+- `src/utils/parser.ts` (added optional referenceDate parameter)
 
 ---
 
@@ -1038,6 +1048,14 @@ n		Subnote (two Tabs = level 2)
 - Reschedule via Daily Review (edit and add new time)
 - Edit items directly in timeline or thoughts pane
 - Natural language parsing handles date/time updates elegantly
+
+---
+
+## License
+
+This project is licensed under the Apache License 2.0, which requires attribution when the code is used or distributed. See the LICENSE file for full terms.
+
+**Copyright**: 2025 Sawt Dakhili
 
 ---
 
