@@ -6,7 +6,7 @@ A minimalist productivity app that harmonizes thought capture with time-based pl
 
 ## Screenshots
 
-### Desktop Interface
+### Desktop Interface (Book Mode)
 
 ![Thoughts & Time App](screenshot.png)
 
