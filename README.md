@@ -6,6 +6,12 @@ A minimalist productivity app that harmonizes thought capture with time-based pl
 
 ## Screenshots
 
+### Desktop Interface
+
+![Thoughts & Time App](screenshot.png)
+
+*The dual-pane interface showing the Thoughts pane (left) with notes and tasks, and the Time pane (right) with the timeline and Daily Review.*
+
 ### Mobile Interface (Infinite Scroll Mode)
 
 <p align="center">
