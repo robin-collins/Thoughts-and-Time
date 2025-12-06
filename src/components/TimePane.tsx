@@ -808,9 +808,9 @@ function TimePane({
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className={`flex-1 overflow-y-auto px-24 py-16 ${
-            viewMode === 'book' ? 'snap-y snap-proximity' : ''
-          } ${isPageFlipping && viewMode === 'book' ? 'page-flip' : ''}`}
+          className={`flex-1 overflow-y-auto px-24 ${
+            viewMode === 'infinite' ? 'pt-24 pb-16' : 'py-16'
+          } ${viewMode === 'book' ? 'snap-y snap-proximity' : ''} ${isPageFlipping && viewMode === 'book' ? 'page-flip' : ''}`}
           style={
             isMobile
               ? { height: `calc(100vh - ${MOBILE.FOOTER_HEIGHT}px)` }
@@ -877,7 +877,7 @@ function TimePane({
                   >
                     {/* Date Header */}
                     <div
-                      className={`sticky top-64 z-20 bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}
+                      className={`sticky top-0 z-20 bg-background py-3 mb-6 border-b border-border-subtle -mt-24 pt-24 ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}
                       style={{ boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)' }}
                     >
                       <h3 className="text-base font-serif uppercase tracking-wide">
@@ -956,7 +956,7 @@ function TimePane({
                 <div key={date} className="snap-start snap-always">
                   {/* Date Header */}
                   <div
-                    className={`sticky top-64 z-20 bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}
+                    className={`sticky top-0 z-20 bg-background py-3 mb-6 border-b border-border-subtle -mt-24 pt-24 ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}
                     style={{ boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)' }}
                   >
                     <h3 className="text-base font-serif uppercase tracking-wide">
