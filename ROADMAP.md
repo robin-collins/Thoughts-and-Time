@@ -1083,4 +1083,101 @@ This project is licensed under the Apache License 2.0, which requires attributio
 
 ---
 
+## Recent Bug Fixes & Improvements (December 6, 2025)
+
+### ✅ Floating Date Header Fix for Infinite Scroll
+
+**Issue**: Sticky day headers were blocking content from previous days in infinite scroll mode due to CSS stacking context conflicts with virtualized absolute positioning.
+
+**Solution**: Implemented floating header overlay pattern:
+- Created `FloatingDateHeader` component that lives outside virtualized content
+- Added RAF-throttled scroll tracking to detect visible date
+- Converted sticky headers in virtualized rows to relative positioning (now act as visual separators only)
+- Applied to both ThoughtsPane and TimePane
+
+**Files Created:**
+- `src/components/FloatingDateHeader.tsx`
+
+**Files Modified:**
+- `src/components/TimePane.tsx` - Added scroll tracking and floating header integration
+- `src/components/ThoughtsPane.tsx` - Added scroll tracking and floating header integration
+- `src/index.css` - Added `--z-floating-header: 30` z-index layer
+
+**Performance Impact**: Zero - uses `requestAnimationFrame` for smooth 60fps updates with passive scroll listeners.
+
+---
+
 Last updated: December 6, 2025
+
+---
+
+## Self-Hosted Version
+
+**Status**: Planned 🟢
+
+### Overview
+
+A self-hosted version of Thoughts & Time for users who want full control over their data and deployment.
+
+### Requirements
+
+- [ ] Docker containerization
+- [ ] Docker Compose setup for easy deployment
+- [ ] Environment variable configuration
+- [ ] Optional Supabase backend support
+- [ ] SQLite fallback for simple deployments
+- [ ] Deployment documentation
+- [ ] Nginx reverse proxy configuration
+- [ ] SSL/TLS certificate setup guide
+- [ ] Backup and restore scripts
+- [ ] Update/migration path documentation
+
+### Deployment Options
+
+1. **Docker (Recommended)**
+   - Single container with built-in SQLite
+   - Multi-container with separate database service
+   - Docker Compose for orchestration
+
+2. **Traditional Hosting**
+   - Static file hosting for frontend
+   - Optional backend API server
+   - Database configuration (PostgreSQL/SQLite)
+
+3. **Cloud Platforms**
+   - Railway
+   - Fly.io
+   - DigitalOcean App Platform
+   - Heroku
+   - Vercel (frontend) + Supabase (backend)
+
+### Documentation Needed
+
+- `SELF_HOSTING.md` - Complete self-hosting guide
+- `docker-compose.yml` - Docker orchestration
+- `Dockerfile` - Container build instructions
+- `.env.example` - Environment variables template
+- Deployment scripts for common platforms
+
+### Security Considerations
+
+- [ ] User authentication for multi-user deployments
+- [ ] Environment variable encryption
+- [ ] Database connection security
+- [ ] Rate limiting
+- [ ] CORS configuration
+- [ ] Session management
+- [ ] Backup encryption
+
+### Files to Create
+
+- `Dockerfile`
+- `docker-compose.yml`
+- `.dockerignore`
+- `SELF_HOSTING.md`
+- `scripts/backup.sh`
+- `scripts/restore.sh`
+- `scripts/update.sh`
+- `nginx.conf` (example)
+
+---

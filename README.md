@@ -4,11 +4,16 @@
 
 A minimalist productivity app that harmonizes thought capture with time-based planning through a dual-pane interface.
 
-## Screenshot
+## Screenshots
 
-![Thoughts & Time App](screenshot.png)
+### Mobile Interface (Infinite Scroll Mode)
 
-*The dual-pane interface showing the Thoughts pane (left) with notes and tasks, and the Time pane (right) with the timeline and Daily Review.*
+<p align="center">
+  <img src="screenshot-mobile-thoughts-updated.png" width="45%" alt="Thoughts Pane - Mobile" />
+  <img src="screenshot-mobile-time-updated.png" width="45%" alt="Time Pane - Mobile" />
+</p>
+
+*Mobile views in infinite scroll mode showing the floating date header at the top. Left: Thoughts pane with all item types (notes, tasks, events) arranged chronologically. Right: Time pane with scheduled items and Daily Review section displaying incomplete tasks from previous days. Both panes feature swipe navigation and touch-optimized controls.*
 
 ## Philosophy
 

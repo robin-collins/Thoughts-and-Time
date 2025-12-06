@@ -15,6 +15,7 @@ import ItemDisplay from './ItemDisplay';
 import TimePromptModal from './TimePromptModal';
 import FAB from './FAB';
 import BottomSheet from './BottomSheet';
+import { FloatingDateHeader } from './FloatingDateHeader';
 import { Item } from '../types';
 import { parseInput } from '../utils/parser';
 import {
@@ -100,6 +101,10 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
 
     // Generate date range: past to future days (memoized to prevent recreation)
     const today = format(new Date(), 'yyyy-MM-dd');
+
+    // Track which date header should be visible at top (for floating header in infinite mode)
+    const [visibleHeaderDate, setVisibleHeaderDate] = useState<string>(today);
+
     const dates = useMemo(() => {
       const result: string[] = [];
       for (let i = -DATE_RANGE.PAST_DAYS; i <= DATE_RANGE.FUTURE_DAYS; i++) {
@@ -185,6 +190,52 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
       onPreviousDay,
       setIsPageFlipping,
     });
+
+    // Calculate which date is currently at the top of viewport (for floating header)
+    const updateVisibleHeader = useCallback(() => {
+      if (!scrollRef.current) return;
+
+      const scrollTop = scrollRef.current.scrollTop;
+      const virtualItems = virtualizer.getVirtualItems();
+
+      // Find the first virtual item that overlaps with viewport top
+      for (const item of virtualItems) {
+        if (item.start + item.size > scrollTop) {
+          const date = visibleDates[item.index];
+          if (date !== visibleHeaderDate) {
+            setVisibleHeaderDate(date);
+          }
+          break;
+        }
+      }
+    }, [virtualizer, visibleDates, visibleHeaderDate]);
+
+    // Update floating header on scroll (throttled with RAF for performance)
+    useEffect(() => {
+      const scrollElement = scrollRef.current;
+      if (!scrollElement || viewMode !== 'infinite') return;
+
+      let ticking = false;
+      const handleScrollThrottled = () => {
+        if (!ticking) {
+          requestAnimationFrame(() => {
+            updateVisibleHeader();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+
+      scrollElement.addEventListener('scroll', handleScrollThrottled, { passive: true });
+      return () => scrollElement.removeEventListener('scroll', handleScrollThrottled);
+    }, [updateVisibleHeader, viewMode]);
+
+    // Initialize visible header to today on mount
+    useEffect(() => {
+      if (viewMode === 'infinite') {
+        setVisibleHeaderDate(today);
+      }
+    }, [viewMode, today]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newValue = e.target.value;
@@ -454,6 +505,14 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
           onCancel={handleTimePromptCancel}
         />
 
+        {/* Floating header for infinite scroll mode - shows current date */}
+        {viewMode === 'infinite' && visibleDates.length > 0 && (
+          <FloatingDateHeader
+            date={visibleHeaderDate}
+            isToday={visibleHeaderDate === today}
+          />
+        )}
+
         {/* Items Area - Scrollable through all days */}
         <div
           ref={scrollRef}
@@ -507,8 +566,7 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
                   >
                     {/* Date Header */}
                     <div
-                      className={`sticky top-0 z-20 bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}
-                      style={{ boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)' }}
+                      className={`relative bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}
                     >
                       <h3 className="text-base font-serif uppercase tracking-wide">
                         {format(parseISO(date), 'EEEE, MMM d, yyyy')}
@@ -557,8 +615,7 @@ const ThoughtsPane = forwardRef<ThoughtsPaneHandle, ThoughtsPaneProps>(
                 <div key={date} className="snap-start snap-always">
                   {/* Date Header */}
                   <div
-                    className={`sticky top-0 z-20 bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}
-                    style={{ boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)' }}
+                    className={`relative bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}
                   >
                     <h3 className="text-base font-serif uppercase tracking-wide">
                       {format(parseISO(date), 'EEEE, MMM d, yyyy')}

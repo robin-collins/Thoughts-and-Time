@@ -129,6 +129,7 @@ npm run lint         # ESLint
 - `src/utils/parser.ts` - Input parsing logic
 - `src/components/ThoughtsPane.tsx` - Left pane (thoughts)
 - `src/components/TimePane.tsx` - Right pane (timeline)
+- `src/components/FloatingDateHeader.tsx` - Floating date header for infinite scroll mode
 - `src/components/ItemDisplay.tsx` - Item rendering
 - `src/components/ItemEditor.tsx` - Item edit mode (uses SymbolEditor)
 - `src/components/SymbolEditor.tsx` - CodeMirror 6 editor with Tab/indentation

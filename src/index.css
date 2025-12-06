@@ -38,6 +38,7 @@
     --mobile-bottom-sheet-border-radius: 16px;
 
     /* Z-index layers */
+    --z-floating-header: 30;  /* Floating date header overlay in infinite scroll mode */
     --z-footer: 30;
     --z-fab: 40;
     --z-bottom-sheet-backdrop: 50;
