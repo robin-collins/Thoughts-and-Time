@@ -7,6 +7,7 @@ import DailyReview from './DailyReview';
 import TimePromptModal from './TimePromptModal';
 import ConfirmDialog from './ConfirmDialog';
 import EditEntryInput from './EditEntryInput';
+import { FloatingDateHeader } from './FloatingDateHeader';
 import { Item, Todo, Event as EventType, Routine } from '../types';
 import { parseInput } from '../utils/parser';
 import { createItem } from '../utils/itemFactory';
@@ -166,6 +167,10 @@ function TimePane({
 
   // Generate date range: past to future days (memoized to prevent recreation)
   const today = format(new Date(), 'yyyy-MM-dd');
+
+  // Track which date header should be visible at top (for floating header in infinite mode)
+  const [visibleHeaderDate, setVisibleHeaderDate] = useState<string>(today);
+
   const dates = useMemo(() => {
     const result: string[] = [];
     for (let i = -DATE_RANGE.PAST_DAYS; i <= DATE_RANGE.FUTURE_DAYS; i++) {
@@ -241,6 +246,52 @@ function TimePane({
     onPreviousDay,
     setIsPageFlipping,
   });
+
+  // Calculate which date is currently at the top of viewport (for floating header)
+  const updateVisibleHeader = useCallback(() => {
+    if (!scrollRef.current) return;
+
+    const scrollTop = scrollRef.current.scrollTop;
+    const virtualItems = virtualizer.getVirtualItems();
+
+    // Find the first virtual item that overlaps with viewport top
+    for (const item of virtualItems) {
+      if (item.start + item.size > scrollTop) {
+        const date = visibleDates[item.index];
+        if (date !== visibleHeaderDate) {
+          setVisibleHeaderDate(date);
+        }
+        break;
+      }
+    }
+  }, [virtualizer, visibleDates, visibleHeaderDate]);
+
+  // Update floating header on scroll (throttled with RAF for performance)
+  useEffect(() => {
+    const scrollElement = scrollRef.current;
+    if (!scrollElement || viewMode !== 'infinite') return;
+
+    let ticking = false;
+    const handleScrollThrottled = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          updateVisibleHeader();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    scrollElement.addEventListener('scroll', handleScrollThrottled, { passive: true });
+    return () => scrollElement.removeEventListener('scroll', handleScrollThrottled);
+  }, [updateVisibleHeader, viewMode]);
+
+  // Initialize visible header to today on mount
+  useEffect(() => {
+    if (viewMode === 'infinite') {
+      setVisibleHeaderDate(today);
+    }
+  }, [viewMode, today]);
 
   // Get symbol for item type
   const getSymbol = (item: Item) => {
@@ -804,13 +855,21 @@ function TimePane({
       />
 
       <div className="h-full flex flex-col">
+        {/* Floating header for infinite scroll mode - shows current date */}
+        {viewMode === 'infinite' && visibleDates.length > 0 && (
+          <FloatingDateHeader
+            date={visibleHeaderDate}
+            isToday={visibleHeaderDate === today}
+          />
+        )}
+
         {/* Timeline - Scrollable through all days */}
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className={`flex-1 overflow-y-auto px-24 py-16 ${
-            viewMode === 'book' ? 'snap-y snap-proximity' : ''
-          } ${isPageFlipping && viewMode === 'book' ? 'page-flip' : ''}`}
+          className={`flex-1 overflow-y-auto px-24 ${
+            viewMode === 'infinite' ? 'pt-24 pb-16' : 'py-16'
+          } ${viewMode === 'book' ? 'snap-y snap-proximity' : ''} ${isPageFlipping && viewMode === 'book' ? 'page-flip' : ''}`}
           style={
             isMobile
               ? { height: `calc(100vh - ${MOBILE.FOOTER_HEIGHT}px)` }
@@ -873,11 +932,11 @@ function TimePane({
                       width: '100%',
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
-                    className="pb-16"
+                    className="pb-32"
                   >
                     {/* Date Header */}
                     <div
-                      className={`sticky top-0 bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}
+                      className={`relative bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}
                     >
                       <h3 className="text-base font-serif uppercase tracking-wide">
                         {format(parseISO(date), 'EEEE, MMM d, yyyy')}
@@ -955,7 +1014,7 @@ function TimePane({
                 <div key={date} className="snap-start snap-always">
                   {/* Date Header */}
                   <div
-                    className={`sticky top-0 bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}
+                    className={`relative bg-background py-3 mb-6 border-b border-border-subtle ${isToday ? 'text-text-primary' : 'text-text-secondary'}`}
                   >
                     <h3 className="text-base font-serif uppercase tracking-wide">
                       {format(parseISO(date), 'EEEE, MMM d, yyyy')}

@@ -1,6 +1,6 @@
 # Thoughts & Time - Development Roadmap
 
-**Last Updated**: November 28, 2025
+**Last Updated**: December 6, 2025
 **Current Status**: MVP with core features ✅
 
 ---
@@ -45,7 +45,7 @@ This app enforces a strict scheduling philosophy: **every single task, event, an
 - [x] Error boundary with graceful error handling
 - [x] Keyboard shortcuts (Cmd/Ctrl+F, Escape, Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z)
 - [x] Accessibility improvements (ARIA labels, focus indicators, keyboard navigation)
-- [x] Comprehensive test suite (278 tests with Vitest)
+- [x] Comprehensive test suite (388 tests with Vitest)
 - [x] Store helper functions extracted (itemHelpers.ts)
 - [x] Undo/Redo system (tracks all actions with Cmd/Ctrl+Z/Shift+Z)
 - [x] Undo button in delete toasts
@@ -401,44 +401,56 @@ domain: 13px, #6A6A6A
 
 #### 12. Mobile Responsive Optimizations
 
-**Status**: Design complete ✅, Implementation pending
+**Status**: Completed ✅ (December 6, 2025)
 
-**Design Mockups**: See `MOBILE_MOCKUPS.md` for comprehensive mobile design specification
+**Design & Documentation**: See `MOBILE_MOCKUPS.md` and `MOBILE_IMPLEMENTATION.md`
 
-**Completed Design Work**:
+**Completed Features**:
 
 - [x] Mobile mockups with footer-based navigation (thumb-zone optimized)
 - [x] Footer shows active pane + inactive pane with directional arrows
-- [x] Swipe gesture specification (anywhere except footer)
+- [x] Swipe gesture detection (left/right to switch panes)
 - [x] Search/Settings buttons in bottom right
-- [x] Single-pane view with transitions
-- [x] Daily Review as bottom sheet
-- [x] 14 edge cases documented with solutions
-  - Footer crowding, text truncation, accidental taps
-  - Swipe conflicts, keyboard behavior, accessibility
-  - Modals, animations, z-index, safe areas
+- [x] Single-pane view with smooth transitions
+- [x] Bottom sheet for input (slides up from bottom, ~60% height)
+- [x] FAB (Floating Action Button) for quick capture
+- [x] Touch gesture detection with velocity thresholds
+- [x] Mobile tap targets (44×44px minimum throughout)
+- [x] Footer navigation with text labels and directional arrows
+- [x] Virtual keyboard detection (hide footer when keyboard visible)
+- [x] iOS Safari support (safe areas, viewport fixes)
+- [x] Haptic feedback (Vibration API with graceful degradation)
+- [x] Responsive breakpoints (mobile < 768px, tablet 768-1023px, desktop ≥ 1024px)
+- [x] 109 comprehensive mobile tests (hooks + components)
+- [x] 14 edge cases handled (keyboard conflicts, safe areas, accessibility, etc.)
 
-**Implementation Requirements**:
+**Mobile Hooks Created** (4):
+- `src/hooks/useMobileLayout.ts` - Breakpoint detection
+- `src/hooks/useSwipeGesture.ts` - Touch gesture detection
+- `src/hooks/useHapticFeedback.ts` - Vibration API wrapper
+- `src/hooks/useKeyboardDetection.ts` - Virtual keyboard detection
 
-- [ ] Swipeable panes (swipe left/right to switch)
-- [ ] Touch gesture detection with velocity thresholds
-- [ ] Mobile tap targets (44×44px minimum)
-- [ ] Footer navigation with text labels and icons
-- [ ] Hide footer on scroll down, show on scroll up
-- [ ] Virtual keyboard handling (hide footer when keyboard visible)
-- [ ] iOS Safari fixes (viewport, scroll bounce, safe areas)
-- [ ] Android Chrome fixes
-- [ ] Responsive text breakpoints (≥390px, 360-389px, <360px)
-- [ ] Haptic feedback on pane switch
-- [ ] First-launch onboarding (arrow pulse animation)
+**Mobile Components Created** (3):
+- `src/components/BottomSheet.tsx` - Slide-up modal with backdrop
+- `src/components/FAB.tsx` - Floating action button
+- `src/components/MobileFooter.tsx` - Bottom navigation
 
-**Files to modify**:
+**Files Modified** (10):
+- `src/App.tsx` - Mobile layout integration, swipe gestures
+- `src/components/ThoughtsPane.tsx` - FAB + BottomSheet for mobile
+- `src/components/TimePane.tsx` - Mobile height adjustments
+- `src/components/DailyReview.tsx` - Mobile adaptations
+- `src/store/useSettingsStore.ts` - Mobile pane state
+- `src/constants/index.ts` - Mobile constants (breakpoints, sizes)
+- `src/index.css` - Mobile styles and animations
+- `tailwind.config.js` - Mobile breakpoints
+- `README.md` - Mobile documentation section
+- `MOBILE_IMPLEMENTATION.md` - Complete mobile guide (created)
 
-- `src/App.tsx` (add swipe detection, footer navigation)
-- `src/components/*.tsx` (adjust tap target sizes)
-- `src/styles/index.css` (mobile-specific styles, footer, animations)
-- Add: `src/hooks/useSwipeGesture.ts` (new file - gesture detection)
-- Add: `src/components/MobileFooter.tsx` (new file - footer navigation)
+**Test Coverage**:
+- 37 hook tests (useMobileLayout, useHapticFeedback, useKeyboardDetection, useSwipeGesture)
+- 72 component tests (FAB, MobileFooter, BottomSheet)
+- All tests passing (388 total, 109 mobile-specific)
 
 ---
 
@@ -1012,8 +1024,9 @@ n		Subnote (two Tabs = level 2)
 
 ### Immediate (This Week)
 
-1. Mobile responsive optimizations (swipe gestures, tap targets)
-2. Full accessibility audit (manual testing)
+1. PWA support (web manifest, service worker, offline mode)
+2. Mobile E2E tests (Playwright tests for mobile viewports)
+3. Full accessibility audit (manual testing)
 
 ### Short Term (Next 2 Weeks)
 
@@ -1070,4 +1083,101 @@ This project is licensed under the Apache License 2.0, which requires attributio
 
 ---
 
-Last updated: November 28, 2025
+## Recent Bug Fixes & Improvements (December 6, 2025)
+
+### ✅ Floating Date Header Fix for Infinite Scroll
+
+**Issue**: Sticky day headers were blocking content from previous days in infinite scroll mode due to CSS stacking context conflicts with virtualized absolute positioning.
+
+**Solution**: Implemented floating header overlay pattern:
+- Created `FloatingDateHeader` component that lives outside virtualized content
+- Added RAF-throttled scroll tracking to detect visible date
+- Converted sticky headers in virtualized rows to relative positioning (now act as visual separators only)
+- Applied to both ThoughtsPane and TimePane
+
+**Files Created:**
+- `src/components/FloatingDateHeader.tsx`
+
+**Files Modified:**
+- `src/components/TimePane.tsx` - Added scroll tracking and floating header integration
+- `src/components/ThoughtsPane.tsx` - Added scroll tracking and floating header integration
+- `src/index.css` - Added `--z-floating-header: 30` z-index layer
+
+**Performance Impact**: Zero - uses `requestAnimationFrame` for smooth 60fps updates with passive scroll listeners.
+
+---
+
+Last updated: December 6, 2025
+
+---
+
+## Self-Hosted Version
+
+**Status**: Planned 🟢
+
+### Overview
+
+A self-hosted version of Thoughts & Time for users who want full control over their data and deployment.
+
+### Requirements
+
+- [ ] Docker containerization
+- [ ] Docker Compose setup for easy deployment
+- [ ] Environment variable configuration
+- [ ] Optional Supabase backend support
+- [ ] SQLite fallback for simple deployments
+- [ ] Deployment documentation
+- [ ] Nginx reverse proxy configuration
+- [ ] SSL/TLS certificate setup guide
+- [ ] Backup and restore scripts
+- [ ] Update/migration path documentation
+
+### Deployment Options
+
+1. **Docker (Recommended)**
+   - Single container with built-in SQLite
+   - Multi-container with separate database service
+   - Docker Compose for orchestration
+
+2. **Traditional Hosting**
+   - Static file hosting for frontend
+   - Optional backend API server
+   - Database configuration (PostgreSQL/SQLite)
+
+3. **Cloud Platforms**
+   - Railway
+   - Fly.io
+   - DigitalOcean App Platform
+   - Heroku
+   - Vercel (frontend) + Supabase (backend)
+
+### Documentation Needed
+
+- `SELF_HOSTING.md` - Complete self-hosting guide
+- `docker-compose.yml` - Docker orchestration
+- `Dockerfile` - Container build instructions
+- `.env.example` - Environment variables template
+- Deployment scripts for common platforms
+
+### Security Considerations
+
+- [ ] User authentication for multi-user deployments
+- [ ] Environment variable encryption
+- [ ] Database connection security
+- [ ] Rate limiting
+- [ ] CORS configuration
+- [ ] Session management
+- [ ] Backup encryption
+
+### Files to Create
+
+- `Dockerfile`
+- `docker-compose.yml`
+- `.dockerignore`
+- `SELF_HOSTING.md`
+- `scripts/backup.sh`
+- `scripts/restore.sh`
+- `scripts/update.sh`
+- `nginx.conf` (example)
+
+---

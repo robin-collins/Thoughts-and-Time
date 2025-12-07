@@ -397,8 +397,12 @@ export function parseDateTime(content: string, referenceDate?: Date): {
   refText: string;
   endDate?: Date | null;
 } {
+<<<<<<< HEAD
   const refDate = referenceDate || new Date();
   const results = customChrono.parse(content, refDate);
+=======
+  const results = customChrono.parse(content, referenceDate || new Date());
+>>>>>>> 2d7595ce227458487a8614a8b653cf0b7cc67bc2
 
   // Check for 24h time pattern "at HH:MM" that chrono might miss entirely
   const time24Match = content.match(/\bat\s+(\d{1,2}):(\d{2})\b/i);
@@ -470,7 +474,7 @@ export function parseInput(input: string, referenceDate?: Date): ParsedInput {
 
   if (type === 'routine') {
     recurrencePattern = detectRecurrencePattern(content);
-    const parsed = parseDateTime(content);
+    const parsed = parseDateTime(content, referenceDate);
     scheduledTime = parsed.date;
     hasTime = parsed.hasTime;
   }
